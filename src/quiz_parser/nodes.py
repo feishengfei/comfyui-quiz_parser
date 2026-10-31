@@ -11,7 +11,7 @@ class QuizParseExtractAudio:
             }
         }
 
-    RETURN_TYPES = ("LIST",)
+    RETURN_TYPES = ("ANY",)
     FUNCTION = "execute"
     CATEGORY = "QuizParser/Extract"
     DESCRIPTION = "从试卷YAML提取全部audio(a)资源，输出扁平化资源list[dict]"
@@ -33,7 +33,7 @@ class QuizParseExtractImage:
             }
         }
 
-    RETURN_TYPES = ("LIST",)
+    RETURN_TYPES = ("ANY",)
     FUNCTION = "execute"
     CATEGORY = "QuizParser/Extract"
     DESCRIPTION = "从试卷YAML提取全部image(i)资源，输出扁平化资源list[dict]"
