@@ -41,6 +41,13 @@ body {
     border‑bottom:1px solid #aaa;
     padding‑bottom:4pt;
 }
+/* ========== gst 共享篇章打印样式 ========== */
+.group-shared-text {
+    margin: 8pt 0 12pt 0;
+    line-height: 1.7;
+    white-space: pre‑line;
+}
+/* ========================================== */
 .question‑wrap {
     margin‑bottom:16pt;
     padding‑bottom:8pt;
@@ -93,14 +100,18 @@ body {
     <div class="quiz‑desc">{{ quiz.quiz_meta.subject }}</div>
     {% endif %}
 </div>
-
 {% for g in quiz.groups %}
 <div class="group‑block">
     <div class="group‑title">{{ g.gt }}</div>
+    {% if g.gst %}
+    <div class="group-shared-text">
+{{ g.gst | e }}
+    </div>
+    {% endif %}
     {# group顶层图片 #}
     {% if g._image_logic_paths %}
         {% for sp in g._image_logic_paths %}
-            <img class="q‑img" src="{{ img_map[sp] }}"/>
+            <img class="q‑img" src="{{ img_map[sp] }}" />
         {% endfor %}
     {% endif %}
     {% for q in g.questions %}
@@ -112,14 +123,12 @@ body {
             {% endif %}
         </div>
         <div class="q‑stem">{{ q.stem }}</div>
-
         {# 题目图片，从回填的路径列表读取 #}
         {% if q._image_logic_paths %}
             {% for sp in q._image_logic_paths %}
-                <img class="q‑img" src="{{ img_map[sp] }}"/>
+                <img class="q‑img" src="{{ img_map[sp] }}" />
             {% endfor %}
         {% endif %}
-
         {% if q.o %}
         <ul class="options‑list">
             {% for opt in q.o %}
@@ -127,7 +136,6 @@ body {
             {% endfor %}
         </ul>
         {% endif %}
-
         {% if q.e %}
         <div class="q‑explanation">解析：{{ q.e }}</div>
         {% endif %}

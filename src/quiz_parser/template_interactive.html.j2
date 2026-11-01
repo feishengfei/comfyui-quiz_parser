@@ -42,6 +42,17 @@ body {
     padding-bottom:4px;
     border-bottom: 1px solid #475569;
 }
+/* ========== 新增 gst 共享篇章样式 ========== */
+.group-shared-text {
+    margin: 0.8em 0 1.2em 0;
+    line-height: 1.7;
+    font-size: 1rem;
+    white-space: pre-line;
+}
+.group-block {
+    margin-bottom: 20px;
+}
+/* ========================================== */
 .question-container {
     background-color: #0f172a;
     border-radius:8px;
@@ -141,20 +152,16 @@ dialog::backdrop {
     <div>{{ quiz.quiz_meta.subject }}</div>
     {% endif %}
 </div>
-
 <div id="score-stats-container">
     <div>得分: <span id="score">0</span>%</div>
     <div>正确: <span id="cnt-ok">0</span></div>
     <div>错误: <span id="cnt-err">0</span></div>
 </div>
-
 <div id="quiz-root"></div>
-
 <dialog id="modal">
     <button class="btn-close-modal" onclick="modal.close()">关闭</button>
     <div class="modal-content" id="modal-text"></div>
 </dialog>
-
 <script>
 const quizRawData = {{ quiz | tojson | safe }};
 const imgMap = {{ img_map | tojson | safe }};
@@ -165,20 +172,26 @@ let correctSet = new Set();
 let wrongSet = new Set();
 let questionList = [];
 
-// 解析原始groups扁平化题目
-function flattenQuestions(rawQuiz){
-    const qs = [];
+// 返回带group完整信息的结构，不再扁平化丢弃group
+function buildGroupWrapper(rawQuiz){
+    const groupsWrap = [];
     for(const g of rawQuiz.groups){
+        const qs = [];
         for(const q of g.questions){
             qs.push({
                 groupTitle: g.gt,
                 groupAudioKey: g._audio_logic_path ?? null,
                 groupImagePaths: g._image_logic_paths ?? [],
+                groupGst: g.gst ?? null,
                 question: q
             })
         }
+        groupsWrap.push({
+            group: g,
+            questionWrappers: qs
+        })
     }
-    return qs;
+    return groupsWrap;
 }
 
 function shuffleArray(arr){
@@ -200,33 +213,27 @@ function updateScore(){
     document.getElementById("cnt-err").textContent = err;
 }
 
-function renderOneQuestion(qWrapper, idx){
-    const root = document.getElementById("quiz-root");
-    const q = qWrapper.question;
+// 渲染单个小题
+function renderOneQuestion(qWrapper, qGlobalIdx){
     const div = document.createElement("div");
     div.className = "question-container";
-    div.dataset.qid = String(idx);
+    div.dataset.qid = String(qGlobalIdx);
+    const q = qWrapper.question;
 
     let audioHtml = "";
-    // group顶层音频
     if(qWrapper.groupAudioKey && audioMap[qWrapper.groupAudioKey]){
-        // group音频
         audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[qWrapper.groupAudioKey]}"></div>`;
     }
-    // 题目自身a音频
     if(q._audio_logic_path && audioMap[q._audio_logic_path]){
-        // 题目音频
         audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[q._audio_logic_path]}"></div>`;
     }
 
     let imgHtml = "";
-    // group级图片
     for(const sp of (qWrapper.groupImagePaths ?? [])){
         if(imgMap[sp]){
             imgHtml += `<img class="q-img" src="${imgMap[sp]}">`;
         }
     }
-    // 题目图片
     const qImgPaths = q._image_logic_paths ?? [];
     for(const sp of qImgPaths){
         if(imgMap[sp]){
@@ -239,28 +246,27 @@ function renderOneQuestion(qWrapper, idx){
         const alpha = ["A","B","C","D","E","F"];
         q.o.forEach((opt, oIdx)=>{
             optHtml += `
-            <div class="opt-row" data-opt-key="${opt.k}" data-qid="${idx}">
-                <input type="radio" name="q_${idx}" id="opt_${idx}_${oIdx}" value="${opt.k}">
-                <label for="opt_${idx}_${oIdx}">${opt.t}</label>
+            <div class="opt-row" data-opt-key="${opt.k}" data-qid="${qGlobalIdx}">
+                <input type="radio" name="q_${qGlobalIdx}" id="opt_${qGlobalIdx}_${oIdx}" value="${opt.k}">
+                <label for="opt_${qGlobalIdx}_${oIdx}">${opt.t}</label>
             </div>`
         })
     }
 
     div.innerHTML = `
         <div class="q-header-row">
-            <div class="q-label">题目 ${idx+1}</div>
-            <button class="btn-explain" data-qidx="${idx}">查看解析</button>
+            <div class="q-label">题目 ${qGlobalIdx+1}</div>
+            <button class="btn-explain" data-qidx="${qGlobalIdx}">查看解析</button>
         </div>
         <div class="q-stem">${q.stem ?? ""}</div>
         ${audioHtml}
         ${imgHtml}
         <div class="options-wrap">${optHtml}</div>
     `;
-    root.appendChild(div);
+    return div;
 }
 
 function bindEvents(){
-    // 解析弹窗
     document.querySelectorAll(".btn-explain").forEach(btn=>{
         btn.onclick = (ev)=>{
             const qIdx = Number(ev.target.dataset.qidx);
@@ -271,7 +277,6 @@ function bindEvents(){
             modal.showModal();
         }
     })
-    // 单选点击判分
     document.querySelectorAll(".opt-row input[type='radio']").forEach(radio=>{
         radio.onchange = (ev)=>{
             const inp = ev.target;
@@ -281,8 +286,6 @@ function bindEvents(){
             if (!Number.isInteger(idx) || idx < 0 || idx >= questionList.length) return;
             const targetQ = questionList[idx].question;
             const correctKey = targetQ.ka;
-
-            // 清除该题旧标记
             document.querySelectorAll(`.opt-row[data-qid="${qid}"]`).forEach(r=>{
                 r.classList.remove("correct-mark","wrong-mark");
             })
@@ -301,10 +304,8 @@ function bindEvents(){
 }
 
 function main(){
-    // 绑定：点击dialog遮罩背景就关闭弹窗
     const modal = document.getElementById("modal");
     modal.addEventListener('click', (e)=>{
-        // 点击到dialog本身（遮罩层，不是内部子元素）就关闭
         if(e.target === modal){
             modal.close();
         }
@@ -314,16 +315,51 @@ function main(){
     console.log("imgMap keys", Object.keys(imgMap));
     console.log("quizRawData groups", quizRawData.groups);
 
-    let raw = flattenQuestions(quizRawData);
-    if(shuffleFlag){
-        raw = shuffleArray(raw);
+    const groupWrappers = buildGroupWrapper(quizRawData);
+    // shuffle 只打乱题目顺序，group结构保留；收集全部题目用于判分
+    let allQWrapper = [];
+    for(const gw of groupWrappers){
+        allQWrapper.push(...gw.questionWrappers);
     }
-    questionList = raw;
+    if(shuffleFlag){
+        allQWrapper = shuffleArray(allQWrapper);
+    }
+    questionList = allQWrapper;
+
     const root = document.getElementById("quiz-root");
     root.innerHTML = "";
-    questionList.forEach((item,idx)=>{
-        renderOneQuestion(item, idx);
-    })
+
+    let globalQIdx = 0;
+    // 按group渲染，保留group容器，输出groupTitle → gst篇章文本 → 本组小题
+    for(const gw of groupWrappers){
+        const gBlock = document.createElement("div");
+        gBlock.className = "group-block";
+
+        // group大题标题
+        const gTitleEl = document.createElement("div");
+        gTitleEl.className = "group-title";
+        gTitleEl.textContent = gw.group.gt;
+        gBlock.appendChild(gTitleEl);
+
+        // ========== 渲染 group.gst 共享篇章文本 ==========
+        if(gw.group.gst){
+            const gstEl = document.createElement("div");
+            gstEl.className = "group-shared-text";
+            gstEl.textContent = gw.group.gst;
+            gBlock.appendChild(gstEl);
+        }
+
+        // 渲染本组全部小题
+        for(const qWrap of gw.questionWrappers){
+            // shuffle开启时从打乱后的allQWrapper找到当前qWrap的全局序号
+            const realIdx = questionList.indexOf(qWrap);
+            const qDom = renderOneQuestion(qWrap, realIdx);
+            gBlock.appendChild(qDom);
+            globalQIdx +=1;
+        }
+        root.appendChild(gBlock);
+    }
+
     bindEvents();
     updateScore();
 }

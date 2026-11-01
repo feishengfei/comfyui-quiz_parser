@@ -46,6 +46,13 @@ body {
     border-bottom:1px solid #aaa;
     padding-bottom:4pt;
 }
+/* ========== gst 共享篇章打印样式 ========== */
+.group-shared-text {
+    margin: 8pt 0 12pt 0;
+    line-height: 1.7;
+    white-space: pre‑line;
+}
+/* ========================================== */
 .question-wrap{
     margin-bottom:16pt;
 }
@@ -77,13 +84,17 @@ body {
     <span>姓名：____________</span>
     <span>班级：____________</span>
 </div>
-
 {% for g in quiz.groups %}
 <div class="group-block">
     <div class="group-title">{{ g.gt }}</div>
+    {% if g.gst %}
+    <div class="group-shared-text">
+{{ g.gst | e }}
+    </div>
+    {% endif %}
     {% if g._image_logic_paths %}
         {% for sp in g._image_logic_paths %}
-            <img class="q-img" src="{{ img_map[sp] }}"/>
+            <img class="q-img" src="{{ img_map[sp] }}" />
         {% endfor %}
     {% endif %}
     {% for q in g.questions %}
@@ -91,7 +102,7 @@ body {
         <div>题目 {{ loop.index }}：{{ q.stem }}</div>
         {% if q._image_logic_paths %}
             {% for sp in q._image_logic_paths %}
-                <img class="q-img" src="{{ img_map[sp] }}"/>
+                <img class="q-img" src="{{ img_map[sp] }}" />
             {% endfor %}
         {% endif %}
         {% if q.o %}
@@ -107,4 +118,3 @@ body {
 {% endfor %}
 </body>
 </html>
-
