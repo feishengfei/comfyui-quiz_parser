@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {
+    size: A4;
+    margin: 15mm;
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body {
+    font-family: "Noto Sans SC", system-ui, sans‑serif;
+    font-size: 14pt;
+    line-height: 1.6;
+    color: #111;
+}
+.quiz‑header {
+    text-align: center;
+    margin-bottom: 18pt;
+}
+.quiz‑title {
+    font-size: 20pt;
+    font-weight: bold;
+    margin-bottom: 8pt;
+}
+.quiz‑desc {
+    font-size:13pt;
+    color:#333;
+}
+.group‑block {
+    margin‑bottom: 22pt;
+}
+.group‑title {
+    font‑size:16pt;
+    font‑weight:bold;
+    margin‑bottom:10pt;
+    border‑bottom:1px solid #aaa;
+    padding‑bottom:4pt;
+}
+.question‑wrap {
+    margin‑bottom:16pt;
+    padding‑bottom:8pt;
+}
+.q‑label‑row {
+    display:flex;
+    gap:12pt;
+    align‑items:center;
+    margin‑bottom:6pt;
+}
+.q‑label {
+    font‑weight:bold;
+}
+.q‑answer‑tag {
+    color:#197528;
+    font‑weight:bold;
+}
+.q‑stem {
+    margin‑bottom:8pt;
+}
+.q‑img {
+    max‑width:100%;
+    max‑height:16cm;
+    margin:8pt 0;
+}
+.options‑list {
+    list‑style‑type:upper‑alpha;
+    padding‑left:24pt;
+}
+.options‑list li {
+    margin‑bottom:4pt;
+}
+.q‑explanation {
+    margin‑top:8pt;
+    padding‑left:12pt;
+    border‑left:3px solid #777;
+    color:#333;
+    font‑size:12pt;
+}
+/* 分页辅助：避免题目中间被切断 */
+.question‑wrap, .group‑block {
+    page‑break‑inside:avoid;
+}
+</style>
+</head>
+<body>
+<div class="quiz‑header">
+    <h1 class="quiz‑title">{{ quiz.quiz_meta.title }}【教师版】</h1>
+    {% if quiz.quiz_meta.subject %}
+    <div class="quiz‑desc">{{ quiz.quiz_meta.subject }}</div>
+    {% endif %}
+</div>
+
+{% for g in quiz.groups %}
+<div class="group‑block">
+    <div class="group‑title">{{ g.gt }}</div>
+    {% for q in g.questions %}
+    <div class="question‑wrap">
+        <div class="q‑label‑row">
+            <div class="q‑label">题目 {{ loop.index }}：</div>
+            {% if q.ka %}
+            <div class="q‑answer‑tag">正确答案：{{ q.ka }}</div>
+            {% endif %}
+        </div>
+        <div class="q‑stem">{{ q.stem }}</div>
+
+        {# 渲染题目内图片 #}
+        {% if q.i %}
+            {% set img_items = q.i if q.i is iterable and q.i is not string else [q.i] %}
+            {% for img_item in img_items %}
+                {% if img_item.path in img_map %}
+                    <img class="q‑img" src="{{ img_map[img_item.path] }}"/>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        {% if q.o %}
+        <ul class="options‑list">
+            {% for opt in q.o %}
+            <li>{{ opt.t }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if q.e %}
+        <div class="q‑explanation">解析：{{ q.e }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+</body>
+</html>

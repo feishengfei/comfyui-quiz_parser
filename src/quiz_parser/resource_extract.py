@@ -3,7 +3,7 @@ import re
 
 # -------- 原有全部代码保持原样 --------
 AUDIO_PREFIX_FOLDER = "audio"
-IMAGE_PREFIX_FOLDER = "img"
+IMAGE_PREFIX_FOLDER = "image"
 
 def _sanitize_identifier(raw_str: str) -> str:
     """
@@ -105,7 +105,7 @@ def compute_image_disk_paths(image_resource_list: List[Dict[str, Any]], yaml_bas
     out = []
     for idx, item in enumerate(image_resource_list):
         seq = idx + 1
-        filename = f"img_{seq:05d}.png"
+        filename = f"img_{seq:05d}_.png"
         disk_full = os.path.join(yaml_base_dir, "image", filename)
         new_item = {**item, "disk_file_path": disk_full}
         out.append(new_item)
