@@ -48,17 +48,32 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
             # 判断当前dict是否为目标资源节点 a / i
             if target_key in node:
                 res_val = node[target_key]
-                if res_val is not None and "pd" in res_val:
-                    raw_inner_path = f"{path_seg}.{target_key}"
-                    full_raw_path = f"{prefix_folder}/{raw_inner_path}"
-                    # 直接得到清洗后的安全路径，赋值给path，不再存原始路径、不再有safe_id
-                    safe_path = _sanitize_identifier(full_raw_path)
-                    item = {
-                        "path": safe_path,
-                        "pd": res_val["pd"],
-                    }
-                    print(f"[QuizParser] found resource safe_path={safe_path}")
-                    result.append(item)
+                # 改为守卫if，res_val为None直接跳过处理，移除非法continue
+                if res_val is not None:
+                    # 分支1：i 为数组，一题多张图片
+                    if isinstance(res_val, list):
+                        for idx, sub_item in enumerate(res_val):
+                            if isinstance(sub_item, dict) and "pd" in sub_item:
+                                raw_inner_path = f"{path_seg}.{target_key}[{idx}]"
+                                full_raw_path = f"{prefix_folder}/{raw_inner_path}"
+                                safe_path = _sanitize_identifier(full_raw_path)
+                                item = {
+                                    "path": safe_path,
+                                    "pd": sub_item["pd"],
+                                }
+                                print(f"[QuizParser] found resource safe_path={safe_path}")
+                                result.append(item)
+                    # 分支2：普通字典，单资源（a音频 / i单图）
+                    elif isinstance(res_val, dict) and "pd" in res_val:
+                        raw_inner_path = f"{path_seg}.{target_key}"
+                        full_raw_path = f"{prefix_folder}/{raw_inner_path}"
+                        safe_path = _sanitize_identifier(full_raw_path)
+                        item = {
+                            "path": safe_path,
+                            "pd": res_val["pd"],
+                        }
+                        print(f"[QuizParser] found resource safe_path={safe_path}")
+                        result.append(item)
 
             # cloze 题型特殊规则：q数组内部不再递归扫描资源，只扫描group顶层
             ty_val = node.get("ty")
