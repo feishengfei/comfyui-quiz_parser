@@ -26,7 +26,8 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
         [
             {
                 "path":str,        # 已经sanitize清洗完成的安全路径（逻辑溯源路径，图片不再用作磁盘文件名）
-                "pd": Any          # 原始pd原样透传
+                "pd": Any,         # 原始pd原样透传
+                "json_path": str   # 原始未清洗JSONPath字符串，供渲染脚本回填节点用
             },
             ...
         ]
@@ -45,7 +46,6 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
             # 判断当前dict是否为目标资源节点 a / i
             if target_key in node:
                 res_val = node[target_key]
-                # 改为守卫if，res_val为None直接跳过处理，移除非法continue
                 if res_val is not None:
                     # 分支1：i 为数组，一题多张图片
                     if isinstance(res_val, list):
@@ -57,6 +57,7 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                                 item = {
                                     "path": safe_path,
                                     "pd": sub_item["pd"],
+                                    "json_path": full_raw_path
                                 }
                                 print(f"[QuizParser] found resource safe_path={safe_path}")
                                 result.append(item)
@@ -68,6 +69,7 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                         item = {
                             "path": safe_path,
                             "pd": res_val["pd"],
+                            "json_path": full_raw_path
                         }
                         print(f"[QuizParser] found resource safe_path={safe_path}")
                         result.append(item)
