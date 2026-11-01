@@ -1,155 +1,155 @@
 <!DOCTYPE html>
-<html lang="zh‑CN">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device‑width, initial‑scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 * {
-    box‑sizing: border‑box;
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 body {
-    font‑family: "Noto Sans SC", system‑ui, sans‑serif;
-    background‑color: #020617;
+    font-family: "Noto Sans SC", system-ui, sans-serif;
+    background-color: #020617;
     color: #c7d1dd;
     padding: 24px 16px;
 }
-#score‑stats‑container {
+#score-stats-container {
     position: sticky;
     top: 0;
-    background‑color: #0f172a;
+    background-color: #0f172a;
     padding: 12px 16px;
     display: flex;
     gap: 24px;
-    z‑index: 10;
-    border‑radius: 8px;
-    margin‑bottom: 24px;
+    z-index: 10;
+    border-radius: 8px;
+    margin-bottom: 24px;
 }
-.quiz‑meta {
-    text‑align: center;
-    margin‑bottom: 28px;
+.quiz-meta {
+    text-align: center;
+    margin-bottom: 28px;
 }
-.quiz‑meta h1 {
-    font‑size: 26px;
-    margin‑bottom: 8px;
+.quiz-meta h1 {
+    font-size: 26px;
+    margin-bottom: 8px;
 }
-.group‑title {
-    font‑size: 18px;
-    font‑weight: bold;
-    margin‑top: 24px;
-    margin‑bottom:12px;
-    padding‑bottom:4px;
-    border‑bottom: 1px solid #475569;
+.group-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 24px;
+    margin-bottom:12px;
+    padding-bottom:4px;
+    border-bottom: 1px solid #475569;
 }
-.question‑container {
-    background‑color: #0f172a;
-    border‑radius:8px;
+.question-container {
+    background-color: #0f172a;
+    border-radius:8px;
     padding:16px;
-    margin‑bottom:16px;
+    margin-bottom:16px;
 }
-.q‑header‑row {
+.q-header-row {
     display:flex;
-    justify‑content: space‑between;
-    align‑items: center;
-    margin‑bottom:8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom:8px;
 }
-.q‑label {
-    font‑weight:bold;
-    font‑size:16px;
+.q-label {
+    font-weight:bold;
+    font-size:16px;
 }
-.btn‑explain {
+.btn-explain {
     background:transparent;
     border:none;
     color:#34d399;
     cursor:pointer;
-    font‑size:14px;
+    font-size:14px;
 }
-.q‑stem {
-    margin‑bottom:10px;
-    line‑height:1.55;
+.q-stem {
+    margin-bottom:10px;
+    line-height:1.55;
 }
-.q‑img {
-    max‑width:100%;
+.q-img {
+    max-width:100%;
     margin:10px 0;
-    border‑radius:4px;
+    border-radius:4px;
 }
-.audio‑wrap {
+.audio-wrap {
     margin:8px 0 12px 0;
 }
 audio {
     width:100%;
 }
-.options‑wrap {
+.options-wrap {
     display:flex;
-    flex‑direction:column;
+    flex-direction:column;
     gap:8px;
-    margin‑bottom:12px;
+    margin-bottom:12px;
 }
-.opt‑row {
+.opt-row {
     display:flex;
     gap:10px;
-    align‑items:center;
+    align-items:center;
     padding:6px 8px;
-    border‑radius:4px;
+    border-radius:4px;
 }
 input[type="radio"] {
     width:18px;
     height:18px;
     cursor:pointer;
 }
-.correct‑mark {
+.correct-mark {
     border:2px solid #10b981;
 }
-.wrong‑mark {
+.wrong-mark {
     border:2px solid #ef4444;
 }
 dialog {
-    border‑radius:8px;
-    background‑color:#0f172a;
+    border-radius:8px;
+    background-color:#0f172a;
     color:#e2e8f0;
     border:1px solid #475569;
     padding:16px;
-    max‑width:90vw;
-    max‑height:80vh;
+    max-width:90vw;
+    max-height:80vh;
 }
 dialog::backdrop {
-    background‑color:rgba(0,0,0,0.65);
+    background-color:rgba(0,0,0,0.65);
 }
-.btn‑close‑modal {
+.btn-close-modal {
     float:right;
-    background‑color:#ef4444;
+    background-color:#ef4444;
     color:white;
     border:none;
     padding:4px 8px;
-    border‑radius:4px;
+    border-radius:4px;
     cursor:pointer;
-    margin‑bottom:12px;
+    margin-bottom:12px;
 }
-.modal‑content {
+.modal-content {
     clear:both;
 }
 </style>
 </head>
 <body onload="main()">
-<div class="quiz‑meta">
+<div class="quiz-meta">
     <h1>{{ quiz.quiz_meta.title }}</h1>
     {% if quiz.quiz_meta.subject %}
     <div>{{ quiz.quiz_meta.subject }}</div>
     {% endif %}
 </div>
 
-<div id="score‑stats‑container">
+<div id="score-stats-container">
     <div>得分: <span id="score">0</span>%</div>
-    <div>正确: <span id="cnt‑ok">0</span></div>
-    <div>错误: <span id="cnt‑err">0</span></div>
+    <div>正确: <span id="cnt-ok">0</span></div>
+    <div>错误: <span id="cnt-err">0</span></div>
 </div>
 
-<div id="quiz‑root"></div>
+<div id="quiz-root"></div>
 
 <dialog id="modal">
-    <button class="btn‑close‑modal" onclick="modal.close()">关闭</button>
-    <div class="modal‑content" id="modal‑text"></div>
+    <button class="btn-close-modal" onclick="modal.close()">关闭</button>
+    <div class="modal-content" id="modal-text"></div>
 </dialog>
 
 <script>
@@ -193,39 +193,41 @@ function updateScore(){
     const err = wrongSet.size;
     const pct = total>0 ? Math.round((ok/total)*100):0;
     document.getElementById("score").textContent = pct;
-    document.getElementById("cnt‑ok").textContent = ok;
-    document.getElementById("cnt‑err").textContent = err;
+    document.getElementById("cnt-ok").textContent = ok;
+    document.getElementById("cnt-err").textContent = err;
 }
 
 function renderOneQuestion(qWrapper, idx){
-    const root = document.getElementById("quiz‑root");
+    const root = document.getElementById("quiz-root");
     const q = qWrapper.question;
     const div = document.createElement("div");
-    div.className = "question‑container";
+    div.className = "question-container";
     div.dataset.qid = String(idx);
 
     let audioHtml = "";
     // group顶层音频
     if(qWrapper.groupAudioKey && audioMap[qWrapper.groupAudioKey]){
-        audioHtml += `<div class="audio‑wrap"><audio controls src="${audioMap[qWrapper.groupAudioKey]}"></div>`;
+        // group音频
+        audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[qWrapper.groupAudioKey]}"></div>`;
     }
     // 题目自身a音频
     if(q._audio_logic_path && audioMap[q._audio_logic_path]){
-        audioHtml += `<div class="audio‑wrap"><audio controls src="${audioMap[q._audio_logic_path]}"></div>`;
+        // 题目音频
+        audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[q._audio_logic_path]}"></div>`;
     }
 
     let imgHtml = "";
     // group级图片
-    for(const sp of qWrapper.groupImagePaths){
+    for(const sp of (qWrapper.groupImagePaths ?? [])){
         if(imgMap[sp]){
-            imgHtml += `<img class="q‑img" src="${imgMap[sp]}">`;
+            imgHtml += `<img class="q-img" src="${imgMap[sp]}">`;
         }
     }
     // 题目图片
     const qImgPaths = q._image_logic_paths ?? [];
     for(const sp of qImgPaths){
         if(imgMap[sp]){
-            imgHtml += `<img class="q‑img" src="${imgMap[sp]}">`;
+            imgHtml += `<img class="q-img" src="${imgMap[sp]}">`;
         }
     }
 
@@ -234,7 +236,7 @@ function renderOneQuestion(qWrapper, idx){
         const alpha = ["A","B","C","D","E","F"];
         q.o.forEach((opt, oIdx)=>{
             optHtml += `
-            <div class="opt‑row" data‑opt‑key="${opt.k}" data‑qid="${idx}">
+            <div class="opt-row" data-opt-key="${opt.k}" data-qid="${idx}">
                 <input type="radio" name="q_${idx}" id="opt_${idx}_${oIdx}" value="${opt.k}">
                 <label for="opt_${idx}_${oIdx}">${opt.t}</label>
             </div>`
@@ -242,51 +244,53 @@ function renderOneQuestion(qWrapper, idx){
     }
 
     div.innerHTML = `
-        <div class="q‑header‑row">
-            <div class="q‑label">题目 ${idx+1}</div>
-            <button class="btn‑explain" data‑qidx="${idx}">查看解析</button>
+        <div class="q-header-row">
+            <div class="q-label">题目 ${idx+1}</div>
+            <button class="btn-explain" data-qidx="${idx}">查看解析</button>
         </div>
-        <div class="q‑stem">${q.stem ?? ""}</div>
+        <div class="q-stem">${q.stem ?? ""}</div>
         ${audioHtml}
         ${imgHtml}
-        <div class="options‑wrap">${optHtml}</div>
+        <div class="options-wrap">${optHtml}</div>
     `;
     root.appendChild(div);
 }
 
 function bindEvents(){
     // 解析弹窗
-    document.querySelectorAll(".btn‑explain").forEach(btn=>{
+    document.querySelectorAll(".btn-explain").forEach(btn=>{
         btn.onclick = (ev)=>{
             const qIdx = Number(ev.target.dataset.qidx);
             const modal = document.getElementById("modal");
-            const modalText = document.getElementById("modal‑text");
+            const modalText = document.getElementById("modal-text");
             const qObj = questionList[qIdx].question;
             modalText.innerText = qObj.e ?? "暂无解析";
             modal.showModal();
         }
     })
     // 单选点击判分
-    document.querySelectorAll(".opt‑row input[type='radio']").forEach(radio=>{
+    document.querySelectorAll(".opt-row input[type='radio']").forEach(radio=>{
         radio.onchange = (ev)=>{
             const inp = ev.target;
-            const qid = inp.closest(".opt‑row").dataset.qid;
+            const qid = inp.closest(".opt-row").dataset.qid;
             const userSel = inp.value;
-            const targetQ = questionList[Number(qid)].question;
+            const idx = Number(qid);
+            if (!Number.isInteger(idx) || idx < 0 || idx >= questionList.length) return;
+            const targetQ = questionList[idx].question;
             const correctKey = targetQ.ka;
 
             // 清除该题旧标记
-            document.querySelectorAll(`.opt‑row[data‑qid="${qid}"]`).forEach(r=>{
-                r.classList.remove("correct‑mark","wrong‑mark");
+            document.querySelectorAll(`.opt-row[data-qid="${qid}"]`).forEach(r=>{
+                r.classList.remove("correct-mark","wrong-mark");
             })
             if(userSel === correctKey){
                 correctSet.add(qid);
                 wrongSet.delete(qid);
-                inp.closest(".opt‑row").classList.add("correct‑mark");
+                inp.closest(".opt-row").classList.add("correct-mark");
             }else{
                 wrongSet.add(qid);
                 correctSet.delete(qid);
-                inp.closest(".opt‑row").classList.add("wrong‑mark");
+                inp.closest(".opt-row").classList.add("wrong-mark");
             }
             updateScore();
         }
@@ -294,12 +298,16 @@ function bindEvents(){
 }
 
 function main(){
+    console.log("=== DEBUG ===");
+    console.log("imgMap keys", Object.keys(imgMap));
+    console.log("quizRawData groups", quizRawData.groups);
+
     let raw = flattenQuestions(quizRawData);
     if(shuffleFlag){
         raw = shuffleArray(raw);
     }
     questionList = raw;
-    const root = document.getElementById("quiz‑root");
+    const root = document.getElementById("quiz-root");
     root.innerHTML = "";
     questionList.forEach((item,idx)=>{
         renderOneQuestion(item, idx);
