@@ -153,10 +153,10 @@ dialog::backdrop {
 </dialog>
 
 <script>
-const quizRawData = {{ quiz | tojson }};
-const imgMap = {{ img_map | tojson }};
-const audioMap = {{ audio_map | tojson }};
-const shuffleFlag = {{ shuffle | lower }};
+const quizRawData = {{ quiz | tojson | safe }};
+const imgMap = {{ img_map | tojson | safe }};
+const audioMap = {{ audio_map | tojson | safe }};
+const shuffleFlag = {{ shuffle | lower | safe }};
 
 let correctSet = new Set();
 let wrongSet = new Set();
@@ -180,8 +180,8 @@ function flattenQuestions(rawQuiz){
 
 function shuffleArray(arr){
     const copy = [...arr];
-    for(let i=copy.length‑1; i>0;i--){
-        const j = Math.floor(Math.random()*(i+1));
+    for(let i = copy.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
         [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
