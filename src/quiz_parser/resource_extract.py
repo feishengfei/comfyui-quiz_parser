@@ -8,10 +8,12 @@ IMAGE_PREFIX_FOLDER = "img"
 
 def _sanitize_identifier(raw_str: str) -> str:
     """
-    将原始路径中的 $ [ ] . 等特殊字符替换为下划线，生成安全文件名id
+    将原始路径中的 $ [ ] . 等特殊字符替换为下划线，生成安全路径
     只允许字母数字下划线，连续多个符号压缩成单个下划线，去除首尾下划线
+    Mac/Linux环境保留斜杠/层级
     """
-    s = re.sub(r"[\$\[\]\.\/\\\:]+", "_", raw_str)
+    # 注意：不再把 / 替换为下划线，保留目录分隔符
+    s = re.sub(r"[\$\[\]\.\\\:]+", "_", raw_str)
     s = re.sub(r"_+", "_", s)
     return s.strip("_")
 
@@ -24,8 +26,7 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
     :return: 资源对象列表
         [
             {
-                "path":str,        # 带prefix_folder原始完整路径，仅调试日志，不可直接做文件名
-                "safe_id":str,     # 清洗完毕，用于下游通配匹配 {safe_id}*
+                "path":str,        # 已经sanitize清洗完成的安全路径
                 "pd": Any          # 原始pd原样透传
             },
             ...
@@ -49,15 +50,14 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                 res_val = node[target_key]
                 if res_val is not None and "pd" in res_val:
                     raw_inner_path = f"{path_seg}.{target_key}"
-                    # 将prefix_folder并入path
                     full_raw_path = f"{prefix_folder}/{raw_inner_path}"
-                    safe_id = _sanitize_identifier(full_raw_path)
+                    # 直接得到清洗后的安全路径，赋值给path，不再存原始路径、不再有safe_id
+                    safe_path = _sanitize_identifier(full_raw_path)
                     item = {
-                        "path": full_raw_path,
-                        "safe_id": safe_id,
+                        "path": safe_path,
                         "pd": res_val["pd"],
                     }
-                    print(f"[QuizParser] found resource path={full_raw_path}, safe_id={safe_id}")
+                    print(f"[QuizParser] found resource safe_path={safe_path}")
                     result.append(item)
 
             # cloze 题型特殊规则：q数组内部不再递归扫描资源，只扫描group顶层
