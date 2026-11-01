@@ -112,9 +112,15 @@ dialog {
     padding:16px;
     max-width:90vw;
     max-height:80vh;
+    margin: auto;  /* showModal时自动屏幕居中 */
 }
 dialog::backdrop {
     background-color:rgba(0,0,0,0.65);
+}
+#modal-text {
+    overflow-y: auto;
+    max-height: calc(80vh - 60px);
+    line-height:1.6;
 }
 .btn-close-modal {
     float:right;
@@ -125,9 +131,6 @@ dialog::backdrop {
     border-radius:4px;
     cursor:pointer;
     margin-bottom:12px;
-}
-.modal-content {
-    clear:both;
 }
 </style>
 </head>
@@ -298,6 +301,15 @@ function bindEvents(){
 }
 
 function main(){
+    // 绑定：点击dialog遮罩背景就关闭弹窗
+    const modal = document.getElementById("modal");
+    modal.addEventListener('click', (e)=>{
+        // 点击到dialog本身（遮罩层，不是内部子元素）就关闭
+        if(e.target === modal){
+            modal.close();
+        }
+    });
+
     console.log("=== DEBUG ===");
     console.log("imgMap keys", Object.keys(imgMap));
     console.log("quizRawData groups", quizRawData.groups);
