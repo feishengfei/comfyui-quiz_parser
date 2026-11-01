@@ -30,7 +30,11 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
 
     def walk(node: Any, path_seg: str):
         if isinstance(node, dict):
-            # node 就是 i/a 的【父节点】(group或者question dict)
+            # ========= DEBUG打印 =========
+            keys_have_i = "i" in node
+            if keys_have_i:
+                print(f"[WALK‑DEBUG] path={path_seg} , has i={keys_have_i}, node.t={node.get('t')}")
+            # =============================
             if target_key in node:
                 res_val = node[target_key]
                 if res_val is not None:
@@ -61,9 +65,8 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
 
             ty_val = node.get("t")
             if ty_val == "cloze":
+                print(f"[WALK‑DEBUG] ENTER cloze branch path={path_seg}") # 新增debug
                 for k, v in node.items():
-                    if k == "questions":
-                        continue
                     walk(v, f"{path_seg}.{k}")
                 return
             for k, v in node.items():
