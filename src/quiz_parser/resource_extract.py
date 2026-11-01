@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, Union
 import re
 
-# 目录前缀常量，所有业务方统一导入此处，保证路径一致
+# -------- 原有全部代码保持原样 --------
 AUDIO_PREFIX_FOLDER = "audio"
 IMAGE_PREFIX_FOLDER = "img"
-
 
 def _sanitize_identifier(raw_str: str) -> str:
     """
@@ -26,7 +25,7 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
     :return: 资源对象列表
         [
             {
-                "path":str,        # 已经sanitize清洗完成的安全路径
+                "path":str,        # 已经sanitize清洗完成的安全路径（逻辑溯源路径，图片不再用作磁盘文件名）
                 "pd": Any          # 原始pd原样透传
             },
             ...
@@ -40,9 +39,7 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
         prefix_folder = IMAGE_PREFIX_FOLDER
     else:
         raise ValueError(f"unsupported resource_kind: {resource_kind}")
-
     result: List[Dict[str, Any]] = []
-
     def walk(node: Any, path_seg: str):
         if isinstance(node, dict):
             # 判断当前dict是否为目标资源节点 a / i
@@ -74,7 +71,6 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                         }
                         print(f"[QuizParser] found resource safe_path={safe_path}")
                         result.append(item)
-
             # cloze 题型特殊规则：q数组内部不再递归扫描资源，只扫描group顶层
             ty_val = node.get("ty")
             if ty_val == "cloze":
@@ -83,14 +79,34 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                         continue
                     walk(v, f"{path_seg}.{k}")
                 return
-
             # 普通dict递归全部子key
             for k, v in node.items():
                 walk(v, f"{path_seg}.{k}")
-
         elif isinstance(node, list):
             for idx, elem in enumerate(node):
                 walk(elem, f"{path_seg}[{idx}]")
-
     walk(root_data, "$")
     return result
+
+
+# ====================== 新增下面这个工具函数 ======================
+def compute_image_disk_paths(image_resource_list: List[Dict[str, Any]], yaml_base_dir: str) -> List[Dict[str, Any]]:
+    """
+    根据 collect_resources 返回的图片扁平资源列表，推导真实磁盘文件路径（纯字符串计算，不访问磁盘IO）
+    约定：
+        - 图片磁盘目录：与原始YAML文件同级目录下 `image/` (全小写)
+        - 文件命名规则：img_加上5位数字补零，列表下标idx，磁盘序号 = idx + 1
+          例：idx=0 → img_00001.png ; idx=15 → img_00016.png
+    :param image_resource_list: collect_resources(resource_kind="image")输出的图片资源列表
+    :param yaml_base_dir: 原始YAML文件所在的目录（不带末尾斜杠）
+    :return: 返回新列表，每个元素在原有dict基础上增加 disk_file_path 字段，代表磁盘完整路径
+    """
+    import os
+    out = []
+    for idx, item in enumerate(image_resource_list):
+        seq = idx + 1
+        filename = f"img_{seq:05d}.png"
+        disk_full = os.path.join(yaml_base_dir, "image", filename)
+        new_item = {**item, "disk_file_path": disk_full}
+        out.append(new_item)
+    return out
