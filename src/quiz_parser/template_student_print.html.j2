@@ -9,96 +9,93 @@
 }
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    margin:0;
+    padding:0;
 }
 body {
-    font-family: "Noto Sans SC", system-ui, sans‑serif;
-    font-size: 14pt;
-    line-height: 1.6;
-    color: #111;
+    font-family: "Noto Sans SC", system-ui, sans-serif;
+    font-size:14pt;
+    line-height:1.6;
 }
-.quiz‑header {
-    text-align: center;
-    margin-bottom: 18pt;
+.quiz-header{
+    text-align:center;
+    margin-bottom:18pt;
 }
-.quiz‑title {
-    font-size: 20pt;
-    font-weight: bold;
-    margin-bottom: 8pt;
+.quiz-title{
+    font-size:20pt;
+    font-weight:bold;
+    margin-bottom:8pt;
 }
-.quiz‑desc {
+.quiz-desc{
     font-size:13pt;
-    color:#333;
+    color:#444;
 }
-.group‑block {
-    margin‑bottom: 22pt;
+.info-row{
+    display:flex;
+    gap:40pt;
+    justify-content:center;
+    margin-bottom:16pt;
 }
-.group‑title {
-    font‑size:16pt;
-    font‑weight:bold;
-    margin‑bottom:10pt;
-    border‑bottom:1px solid #aaa;
-    padding‑bottom:4pt;
+.group-block{
+    margin-bottom:22pt;
 }
-.question‑wrap {
-    margin‑bottom:16pt;
-    padding‑bottom:8pt;
+.group-title{
+    font-size:16pt;
+    font-weight:bold;
+    margin-bottom:10pt;
+    border-bottom:1px solid #aaa;
+    padding-bottom:4pt;
 }
-.q‑label {
-    font‑weight:bold;
-    margin‑bottom:6pt;
+.question-wrap{
+    margin-bottom:16pt;
 }
-.q‑stem {
-    margin‑bottom:8pt;
-}
-.q‑img {
-    max‑width:100%;
-    max‑height:16cm;
+.q-img{
+    max-width:100%;
+    max-height:16cm;
     margin:8pt 0;
 }
-.options‑list {
-    list‑style‑type:upper‑alpha;
-    padding‑left:24pt;
+.options-list{
+    list-style-type:upper-alpha;
+    padding-left:24pt;
 }
-.options‑list li {
-    margin‑bottom:4pt;
+.options-list li{
+    margin-bottom:4pt;
 }
-/* 分页辅助：避免题目中间被切断 */
-.question‑wrap, .group‑block {
-    page‑break‑inside:avoid;
+.question-wrap, .group-block {
+    page-break-inside: avoid;
 }
 </style>
 </head>
 <body>
-<div class="quiz‑header">
-    <h1 class="quiz‑title">{{ quiz.quiz_meta.title }}</h1>
+<div class="quiz-header">
+    <h1 class="quiz-title">{{ quiz.quiz_meta.title }}</h1>
     {% if quiz.quiz_meta.subject %}
-    <div class="quiz‑desc">{{ quiz.quiz_meta.subject }}</div>
+    <div class="quiz-desc">{{ quiz.quiz_meta.subject }}</div>
     {% endif %}
+</div>
+<div class="info-row">
+    <span>姓名：____________</span>
+    <span>班级：____________</span>
 </div>
 
 {% for g in quiz.groups %}
-<div class="group‑block">
-    <div class="group‑title">{{ g.gt }}</div>
+<div class="group-block">
+    <div class="group-title">{{ g.gt }}</div>
+    {% if g._image_logic_paths %}
+        {% for sp in g._image_logic_paths %}
+            <img class="q-img" src="{{ img_map[sp] }}"/>
+        {% endfor %}
+    {% endif %}
     {% for q in g.questions %}
-    <div class="question‑wrap">
-        <div class="q‑label">题目 {{ loop.index }}：</div>
-        <div class="q‑stem">{{ q.stem }}</div>
-
-        {# 渲染题目内图片 #}
-        {% if q.i %}
-            {% set img_items = q.i if q.i is iterable and q.i is not string else [q.i] %}
-            {% for img_item in img_items %}
-                {% set safe_logic_path = "img/" + (g._path_seg ~ ".i[" ~ loop.index0 ~ "]") %}
-                {% if img_item.path in img_map %}
-                    <img class="q‑img" src="{{ img_map[img_item.path] }}"/>
-                {% endif %}
+    <div class="question-wrap">
+        <div>题目 {{ loop.index }}：{{ q.stem }}</div>
+        {% if q._image_logic_paths %}
+            {% for sp in q._image_logic_paths %}
+                <img class="q-img" src="{{ img_map[sp] }}"/>
             {% endfor %}
         {% endif %}
-
         {% if q.o %}
-        <ul class="options‑list">
+        <ul class="options-list">
             {% for opt in q.o %}
             <li>{{ opt.t }}</li>
             {% endfor %}
@@ -110,3 +107,4 @@ body {
 {% endfor %}
 </body>
 </html>
+

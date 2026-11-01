@@ -97,6 +97,12 @@ body {
 {% for g in quiz.groups %}
 <div class="group‑block">
     <div class="group‑title">{{ g.gt }}</div>
+    {# group顶层图片 #}
+    {% if g._image_logic_paths %}
+        {% for sp in g._image_logic_paths %}
+            <img class="q‑img" src="{{ img_map[sp] }}"/>
+        {% endfor %}
+    {% endif %}
     {% for q in g.questions %}
     <div class="question‑wrap">
         <div class="q‑label‑row">
@@ -107,13 +113,10 @@ body {
         </div>
         <div class="q‑stem">{{ q.stem }}</div>
 
-        {# 渲染题目内图片 #}
-        {% if q.i %}
-            {% set img_items = q.i if q.i is iterable and q.i is not string else [q.i] %}
-            {% for img_item in img_items %}
-                {% if img_item.path in img_map %}
-                    <img class="q‑img" src="{{ img_map[img_item.path] }}"/>
-                {% endif %}
+        {# 题目图片，从回填的路径列表读取 #}
+        {% if q._image_logic_paths %}
+            {% for sp in q._image_logic_paths %}
+                <img class="q‑img" src="{{ img_map[sp] }}"/>
             {% endfor %}
         {% endif %}
 

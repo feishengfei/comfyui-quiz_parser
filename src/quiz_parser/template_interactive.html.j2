@@ -169,8 +169,9 @@ function flattenQuestions(rawQuiz){
         for(const q of g.questions){
             qs.push({
                 groupTitle: g.gt,
-                question: q,
-                groupAudioKey: g.a?.path ?? null
+                groupAudioKey: g._audio_logic_path ?? null,
+                groupImagePaths: g._image_logic_paths ?? [],
+                question: q
             })
         }
     }
@@ -209,15 +210,22 @@ function renderOneQuestion(qWrapper, idx){
         audioHtml += `<div class="audio‑wrap"><audio controls src="${audioMap[qWrapper.groupAudioKey]}"></div>`;
     }
     // 题目自身a音频
-    if(q.a && q.a.path && audioMap[q.a.path]){
-        audioHtml += `<div class="audio‑wrap"><audio controls src="${audioMap[q.a.path]}"></div>`;
+    if(q._audio_logic_path && audioMap[q._audio_logic_path]){
+        audioHtml += `<div class="audio‑wrap"><audio controls src="${audioMap[q._audio_logic_path]}"></div>`;
     }
 
     let imgHtml = "";
-    const imgArr = Array.isArray(q.i) ? q.i : (q.i ? [q.i]:[]);
-    for(const im of imgArr){
-        if(im.path && imgMap[im.path]){
-            imgHtml += `<img class="q‑img" src="${imgMap[im.path]}">`;
+    // group级图片
+    for(const sp of qWrapper.groupImagePaths){
+        if(imgMap[sp]){
+            imgHtml += `<img class="q‑img" src="${imgMap[sp]}">`;
+        }
+    }
+    // 题目图片
+    const qImgPaths = q._image_logic_paths ?? [];
+    for(const sp of qImgPaths){
+        if(imgMap[sp]){
+            imgHtml += `<img class="q‑img" src="${imgMap[sp]}">`;
         }
     }
 

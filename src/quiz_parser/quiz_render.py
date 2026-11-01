@@ -34,17 +34,40 @@ def read_file_as_b64(file_path: str, mime_type: str) -> str:
     b64 = base64.b64encode(data).decode("utf‑8")
     return f"data:{mime_type};base64,{b64}"
 
-def load_asset_maps(yaml_base_dir: str):
+
+def inject_resource_paths(quiz_data, img_list, audio_list):
+    """
+    根据collect_resources输出的资源列表，回填 _image_logic_paths / _audio_logic_path
+    写入group/question节点，给jinja模板读取
+    """
+    # 构建 path -> 目标节点的映射，JSONPath 格式
+    from jsonpath_ng import parse
+    for item in img_list:
+        sp = item["path"]
+        jp_expr = parse(item["json_path"])
+        match = jp_expr.find(quiz_data)
+        if match:
+            target_node = match[0].value
+            if "_image_logic_paths" not in target_node:
+                target_node["_image_logic_paths"] = []
+            target_node["_image_logic_paths"].append(sp)
+
+    for item in audio_list:
+        sp = item["path"]
+        jp_expr = parse(item["json_path"])
+        match = jp_expr.find(quiz_data)
+        if match:
+            target_node = match[0].value
+            target_node["_audio_logic_path"] = sp
+
+
+def load_asset_maps(yaml_base_dir: str, root_data):
     """
     加载image/audio资源，构建映射字典
-    返回: img_map: {logic_safe_path: base64_dataurl}, audio_map: {logic_safe_path: base64_dataurl}
+    返回: img_map: {logic_safe_path: base64_dataurl}, audio_map: {logic_safe_path: base64_dataurl}, img_raw, audio_raw
     """
     image_dir = os.path.join(yaml_base_dir, "image")
     audio_dir = os.path.join(yaml_base_dir, "audio")
-
-    yaml_path = os.path.join(yaml_base_dir, "quiz.yaml")
-    with open(yaml_path, "r", encoding="utf‑8") as f:
-        root_data = yaml.safe_load(f)
 
     img_raw_list = collect_resources(root_data, resource_kind="image")
     img_resolved = compute_image_disk_paths(img_raw_list, yaml_base_dir)
@@ -62,11 +85,13 @@ def load_asset_maps(yaml_base_dir: str):
         disk_wav = os.path.join(audio_dir, f"{os.path.basename(logic_path)}.wav")
         if os.path.exists(disk_wav):
             audio_map[logic_path] = read_file_as_b64(disk_wav, "audio/wav")
-    return img_map, audio_map
+    return img_map, audio_map, img_raw_list, audio_raw_list
+
 
 def render_html(tpl_env, tpl_name: str, context: dict) -> str:
     tpl = tpl_env.get_template(tpl_name)
     return tpl.render(**context)
+
 
 def html_to_pdf(html_content: str, output_pdf_path: str):
     with sync_playwright() as p:
@@ -87,9 +112,10 @@ def html_to_pdf(html_content: str, output_pdf_path: str):
         page.pdf(path=output_pdf_path,** pdf_opts)
         browser.close()
 
+
 def main():
     parser = argparse.ArgumentParser(description="Quiz YAML render: student.pdf / teacher.pdf / interactive.html")
-    parser.add_argument("quiz_yaml", help="path to quiz.yaml")
+    parser.add_argument("quiz_yaml", help="path to quiz yaml file (any filename)")
     parser.add_argument("--shuffle", action="store_true", default=False, help="shuffle question order")
     parser.add_argument("--template_dir", default=SCRIPT_DIR, help="jinja2 template folder")
     args = parser.parse_args()
@@ -100,9 +126,14 @@ def main():
     with open(quiz_yaml_abs, "r", encoding="utf‑8") as f:
         quiz_data = yaml.safe_load(f)
 
-    img_map, audio_map = load_asset_maps(yaml_base_dir)
+    img_map, audio_map, img_raw, audio_raw = load_asset_maps(yaml_base_dir, quiz_data)
+    # 把资源路径回填进quiz数据树
+    inject_resource_paths(quiz_data, img_raw, audio_raw)
 
     jinja_env = Environment(loader=FileSystemLoader(args.template_dir), autoescape=True)
+    # ✅ 修复tojson中文乱码：增加自定义filter ensure_ascii=False
+    jinja_env.filters["tojson"] = lambda x: yaml.safe_dump(x, allow_unicode=True)
+
     ctx = {
         "quiz": quiz_data,
         "img_map": img_map,
@@ -126,7 +157,7 @@ def main():
     # 3. 教师打印版PDF
     html_teacher = render_html(jinja_env, "template_teacher_print.html.j2", ctx)
     pdf_teacher = os.path.join(yaml_base_dir, "teacher.pdf")
-    html_to_pdf(html_teacher, pdf_teacher)
+    html_to_pdf(html_teacher)
     print(f"✅ 已生成: {pdf_teacher}")
 
 if __name__ == "__main__":
