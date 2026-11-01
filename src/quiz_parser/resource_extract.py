@@ -18,20 +18,6 @@ def _sanitize_identifier(raw_str: str) -> str:
 
 
 def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]]:
-    """
-    递归遍历试卷YAML解析后的数据，收集 a(audio) / i(image) 资源
-    :param root_data: yaml safe_load 返回的对象
-    :param resource_kind: "audio" | "image"
-    :return: 资源对象列表
-        [
-            {
-                "path":str,        # 已经sanitize清洗完成的安全路径（逻辑溯源路径，图片不再用作磁盘文件名）
-                "pd": Any,         # 原始pd原样透传
-                "json_path": str   # 原始未清洗JSONPath字符串，供渲染脚本回填节点用
-            },
-            ...
-        ]
-    """
     if resource_kind == "audio":
         target_key = "a"
         prefix_folder = AUDIO_PREFIX_FOLDER
@@ -41,13 +27,13 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
     else:
         raise ValueError(f"unsupported resource_kind: {resource_kind}")
     result: List[Dict[str, Any]] = []
+
     def walk(node: Any, path_seg: str):
         if isinstance(node, dict):
-            # 判断当前dict是否为目标资源节点 a / i
+            # node 就是 i/a 的【父节点】(group或者question dict)
             if target_key in node:
                 res_val = node[target_key]
                 if res_val is not None:
-                    # 分支1：i 为数组，一题多张图片
                     if isinstance(res_val, list):
                         for idx, sub_item in enumerate(res_val):
                             if isinstance(sub_item, dict) and "pd" in sub_item:
@@ -57,11 +43,10 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                                 item = {
                                     "path": safe_path,
                                     "pd": sub_item["pd"],
-                                    "json_path": full_raw_path
+                                    "parent_node": node   # ✅直接保存父dict对象引用！
                                 }
                                 print(f"[QuizParser] found resource safe_path={safe_path}")
                                 result.append(item)
-                    # 分支2：普通字典，单资源（a音频 / i单图）
                     elif isinstance(res_val, dict) and "pd" in res_val:
                         raw_inner_path = f"{path_seg}.{target_key}"
                         full_raw_path = f"{prefix_folder}/{raw_inner_path}"
@@ -69,24 +54,24 @@ def collect_resources(root_data: Any, resource_kind: str) -> List[Dict[str, Any]
                         item = {
                             "path": safe_path,
                             "pd": res_val["pd"],
-                            "json_path": full_raw_path
+                            "parent_node": node   # ✅父节点引用
                         }
                         print(f"[QuizParser] found resource safe_path={safe_path}")
                         result.append(item)
-            # cloze 题型特殊规则：q数组内部不再递归扫描资源，只扫描group顶层
-            ty_val = node.get("ty")
+
+            ty_val = node.get("t")
             if ty_val == "cloze":
                 for k, v in node.items():
-                    if k == "q":
+                    if k == "questions":
                         continue
                     walk(v, f"{path_seg}.{k}")
                 return
-            # 普通dict递归全部子key
             for k, v in node.items():
                 walk(v, f"{path_seg}.{k}")
         elif isinstance(node, list):
             for idx, elem in enumerate(node):
                 walk(elem, f"{path_seg}[{idx}]")
+
     walk(root_data, "$")
     return result
 

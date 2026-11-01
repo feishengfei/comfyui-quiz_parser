@@ -36,38 +36,17 @@ def read_file_as_b64(file_path: str, mime_type: str) -> str:
     return f"data:{mime_type};base64,{b64}"
 
 def inject_resource_paths(quiz_data, img_list, audio_list):
-    """
-    根据collect_resources输出的资源列表，回填 _image_logic_paths / _audio_logic_path
-    写入group/question节点，给jinja模板读取
-    """
-    from jsonpath_ng import parse
-    import re
-
-    def strip_prefix(jp_str: str):
-        # 移除开头的 image/ 或者 audio/ 前缀
-        return re.sub(r"^(image|audio)/", "", jp_str)
-
     for item in img_list:
         sp = item["path"]
-        orig_jp = item["json_path"]
-        real_jp = strip_prefix(orig_jp)
-        jp_expr = parse(real_jp)
-        match = jp_expr.find(quiz_data)
-        if match:
-            target_node = match[0].value
-            if "_image_logic_paths" not in target_node:
-                target_node["_image_logic_paths"] = []
-            target_node["_image_logic_paths"].append(sp)
+        target_node = item["parent_node"]  # 直接拿到group/question dict
+        if "_image_logic_paths" not in target_node:
+            target_node["_image_logic_paths"] = []
+        target_node["_image_logic_paths"].append(sp)
 
     for item in audio_list:
         sp = item["path"]
-        orig_jp = item["json_path"]
-        real_jp = strip_prefix(orig_jp)
-        jp_expr = parse(real_jp)
-        match = jp_expr.find(quiz_data)
-        if match:
-            target_node = match[0].value
-            target_node["_audio_logic_path"] = sp
+        target_node = item["parent_node"]
+        target_node["_audio_logic_path"] = sp
 
 def load_asset_maps(yaml_base_dir: str, root_data):
     """
@@ -144,10 +123,19 @@ def main():
     # 把资源路径回填进quiz数据树
     inject_resource_paths(quiz_data, img_raw, audio_raw)
 
+    # 调试打印：看group是否真的注入成功
+    for g in quiz_data["groups"]:
+        print(f"[PY DEBUG] group {g.get('gt')} _image_logic_paths = {g.get('_image_logic_paths')}")
+        for q in g["questions"]:
+            print(f"[PY DEBUG]    question qid={q.get('q')} _image_logic_paths={q.get('_image_logic_paths')}")
+
     jinja_env = Environment(loader=FileSystemLoader(args.template_dir), autoescape=True)
     # ✅ 修复tojson中文乱码：增加自定义filter ensure_ascii=False
-    jinja_env.filters["tojson"] = lambda x: json.dumps(x, ensure_ascii=False)
+    def json_filter(val):
+        return json.dumps(val, ensure_ascii=False)
 
+    jinja_env.filters["tojson"] = json_filter
+    
     ctx = {
         "quiz": quiz_data,
         "img_map": img_map,
