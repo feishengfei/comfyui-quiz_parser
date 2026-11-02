@@ -100,15 +100,15 @@ body {
 </style>
 </head>
 <body>
-<div class="quiz‑header">
-    <h1 class="quiz‑title">{{ quiz.quiz_meta.title }}【教师版】</h1>
+<div class="quiz-header">
+    <h1 class="quiz-title">{{ quiz.quiz_meta.title }}【教师版】</h1>
     {% if quiz.quiz_meta.subject %}
-    <div class="quiz‑desc">{{ quiz.quiz_meta.subject }}</div>
+    <div class="quiz-desc">{{ quiz.quiz_meta.subject }}</div>
     {% endif %}
 </div>
 {% for g in quiz.groups %}
-<div class="group‑block">
-    <div class="group‑title">{{ g.gt }}</div>
+<div class="group-block">
+    <div class="group-title">{{ g.gt }}</div>
     {% if g.gst %}
     <div class="group-shared-text">
 {{ g.gst | e }}
@@ -117,33 +117,33 @@ body {
     {# group顶层图片 #}
     {% if g._image_logic_paths %}
         {% for sp in g._image_logic_paths %}
-            <img class="q‑img" src="{{ img_map[sp] }}" />
+            <img class="q-img" src="{{ img_map[sp] }}" />
         {% endfor %}
     {% endif %}
     {% for q in g.questions %}
-    <div class="question‑wrap">
-        <div class="q‑label‑row">
-            <div class="q‑label"><b>{{ loop.index }}：</b></div>
+    <div class="question-wrap">
+        <div class="q-label-row">
+            <div class="q-label">{{ loop.index }}：</div>
             {% if q.ka %}
-            <div class="q‑answer‑tag">正确答案：{{ q.ka }}</div>
+            <div class="q-answer-tag">正确答案：{{ q.ka }}</div>
             {% endif %}
         </div>
-        <div class="q‑stem"><b>{{ q.stem }} </b></div>
+        <div class="q-stem"><b>{{ q.stem }} </b></div>
         {# 题目图片，从回填的路径列表读取 #}
         {% if q._image_logic_paths %}
             {% for sp in q._image_logic_paths %}
-                <img class="q‑img" src="{{ img_map[sp] }}" />
+                <img class="q-img" src="{{ img_map[sp] }}" />
             {% endfor %}
         {% endif %}
         {% if q.o %}
-        <ul class="options‑list">
+        <ul class="options-list">
             {% for opt in q.o %}
             <li>{{ opt.k }}. {{ opt.t }}</li>
             {% endfor %}
         </ul>
         {% endif %}
         {% if q.e %}
-        <div class="q‑explanation">解析：{{ q.e }}</div>
+        <div class="q-explanation">解析：{{ q.e }}</div>
         {% endif %}
     </div>
     {% endfor %}
