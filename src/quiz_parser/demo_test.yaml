@@ -1,0 +1,421 @@
+quiz_meta:
+  title: "小学六年级英语综合示范测试卷"
+  subject: "小学英语（六年级）"
+  version: "grade6_demo_gst_speaker_v3"
+groups:
+  - g: g0
+    gt: "第一部分 听力理解（听对话，选择正确答案）"
+    t: single
+    gst: >
+      听力答题说明：
+      你将听到两段简短对话，每段对话后有1‑2个小题，请根据听到的对话内容，选出最佳答案。
+      请仔细听录音，把答案选出来。
+    a:
+      pd:
+        - txt: "Hi, Tom. What did you do last weekend?"
+          sp: sophie
+          gap: 0.8
+        - txt: "I visited my grandparents. They live in a small village."
+          sp: clint
+          gap: 1.0
+        - txt: "Did you pick fresh fruit there?"
+          sp: sophie
+          gap: 0.8
+        - txt: "Yes! We picked some apples and pears."
+          sp: clint
+          gap: 1.2
+    i:
+      pd: "cartoon children talking on weekend, village background, flat textbook illustration, white background"
+    questions:
+      - q: q0
+        type: single
+        stem: "Where do Tom’s grandparents live?"
+        o:
+          - k: A
+            t: "In a big city."
+          - k: B
+            t: "In a small village."
+          - k: C
+            t: "On a big farm."
+        ka: "B"
+        e: "听力对话中Tom提到：They live in a small village. 所以选B。"
+      - q: q1
+        type: single
+        stem: "What fruit did Tom pick?"
+        o:
+          - k: A
+            t: "Apples and pears."
+          - k: B
+            t: "Bananas and oranges."
+          - k: C
+            t: "Grapes and peaches."
+        ka: "A"
+        e: "对话结尾提到 We picked some apples and pears，选A。"
+
+  - g: g1
+    gt: "第二部分 单项选择 语法与词汇"
+    t: single
+    questions:
+      - q: q2
+        type: single
+        stem: "My mother ______ shopping every Saturday."
+        o:
+          - k: A
+            t: "go"
+          - k: B
+            t: "goes"
+          - k: C
+            t: "going"
+        ka: "B"
+        e: "every Saturday 表示一般现在时；主语my mother是第三人称单数，动词使用goes。"
+      - q: q3
+        type: single
+        stem: "There ______ some water in the bottle."
+        o:
+          - k: A
+            t: "is"
+          - k: B
+            t: "are"
+          - k: C
+            t: "am"
+        ka: "A"
+        e: "water是不可数名词，there be句型中be动词选用is。"
+      - q: q4
+        type: single
+        stem: "— ______ is your new schoolbag? — It’s blue."
+        o:
+          - k: A
+            t: "What"
+          - k: B
+            t: "What colour"
+          - k: C
+            t: "How"
+        ka: "B"
+        e: "答句回答颜色blue，问句应当询问颜色 What colour。"
+      - q: q7
+        type: single
+        stem: "____ name is Li Ming."
+        o:
+          - k: A
+            t: "He"
+          - k: B
+            t: "Him"
+          - k: C
+            t: "His"
+        ka: "C"
+        e: "后面有名词name，要用形容词性物主代词His。"
+      - q: q8
+        type: single
+        stem: "— ____ you have new teachers? — Yes, we do."
+        o:
+          - k: A
+            t: "Is"
+          - k: B
+            t: "Do"
+          - k: C
+            t: "Are"
+        ka: "B"
+        e: "答句用do回答，问句用Do引导一般疑问句。"
+      - q: q9
+        type: single
+        stem: "— What’s your favourite food? — I like fish best, because ____."
+        o:
+          - k: A
+            t: "it's tasty"
+          - k: B
+            t: "they're sweet"
+          - k: C
+            t: "they are hot"
+        ka: "A"
+        e: "fish是不可数名词，用it指代，it's tasty 它很美味。"
+      - q: q10
+        type: single
+        stem: "There ____ a bed, two bedside tables and a closet in the bedroom."
+        o:
+          - k: A
+            t: "are"
+          - k: B
+            t: "is"
+          - k: C
+            t: "am"
+        ka: "B"
+        e: "there be句型就近原则，a bed是单数，be动词用is。"
+      - q: q11
+        type: single
+        stem: "—I can sing an English song for the party. — ____"
+        o:
+          - k: A
+            t: "Wonderful!"
+          - k: B
+            t: "Yes, you can."
+          - k: C
+            t: "I'm sorry!"
+        ka: "A"
+        e: "听到别人的才艺展示，用Wonderful! 太棒了！来夸奖。"
+
+  - g: g2
+    gt: "完形填空"
+    t: cloze
+    gst: >
+      完形填空答题说明：阅读下面短文，从A、B、C三个选项中选出最佳答案补全短文。
+
+      My name is Anna. My family lives in a big ___1___. It has a lot of big windows. There ___2___ many trees outside.
+      The birds like to ___3___ around my house.
+
+      One day, ___4___ unexpected(意料之外) thing happened. My brother and I were drawing pictures when a sparrow(麻雀) knocked on the window.
+
+      We rushed outside ___5___ picked up the little sparrow. My brother said, “The little sparrow got hurt. We should ___6___ it.” The sparrow looked so young. Then, we ___7___ it inside and put it in a warm and dark box. We hoped it would get better. Later, we gave it some water and food.
+
+      The next day, we could hear something ___8___ the box. We ___9___ the box. Whoosh! The bird flew outside. “Be ___10___ next time, little sparrow!” we said. The little sparrow flew away, but we were very happy.
+    i:
+      pd: "cartoon girl and boy help a hurt sparrow, flat textbook illustration, white background"
+    questions:
+      - q: q0
+        type: cloze
+        stem: "___1___"
+        o:
+          - k: A
+            t: "house"
+          - k: B
+            t: "park"
+          - k: C
+            t: "zoo"
+        ka: "A"
+        e: "后文提到有很多窗户，是居住的房子，选house。"
+      - q: q1
+        type: cloze
+        stem: "___2___"
+        o:
+          - k: A
+            t: "am"
+          - k: B
+            t: "is"
+          - k: C
+            t: "are"
+        ka: "C"
+        e: "there be句型，后面many trees是复数，be动词用are。"
+      - q: q2
+        type: cloze
+        stem: "___3___"
+        o:
+          - k: A
+            t: "run"
+          - k: B
+            t: "fly"
+          - k: C
+            t: "read"
+        ka: "B"
+        e: "birds小鸟的动作是飞，fly表示飞。"
+      - q: q3
+        type: cloze
+        stem: "___4___"
+        o:
+          - k: A
+            t: "a"
+          - k: B
+            t: "the"
+          - k: C
+            t: "an"
+        ka: "C"
+        e: "unexpected 元音音素开头，不定冠词用an。"
+      - q: q4
+        type: cloze
+        stem: "___5___"
+        o:
+          - k: A
+            t: "and"
+          - k: B
+            t: "so"
+          - k: C
+            t: "but"
+        ka: "A"
+        e: "rushed outside 和 picked up 是顺承并列动作，and 表并列。"
+      - q: q5
+        type: cloze
+        stem: "___6___"
+        o:
+          - k: A
+            t: "buy"
+          - k: B
+            t: "help"
+          - k: C
+            t: "find"
+        ka: "B"
+        e: "小麻雀受伤了，我们应该帮助它，help表示帮助。"
+      - q: q6
+        type: cloze
+        stem: "___7___"
+        o:
+          - k: A
+            t: "bring"
+          - k: B
+            t: "brought"
+          - k: C
+            t: "brings"
+        ka: "B"
+        e: "整篇故事是过去发生的事情，bring的过去式是brought。"
+      - q: q7
+        type: cloze
+        stem: "___8___"
+        o:
+          - k: A
+            t: "in"
+          - k: B
+            t: "on"
+          - k: C
+            t: "under"
+        ka: "A"
+        e: "麻雀在盒子里面，in表示在……里面。"
+      - q: q8
+        type: cloze
+        stem: "___9___"
+        o:
+          - k: A
+            t: "opened"
+          - k: B
+            t: "cleaned"
+          - k: C
+            t: "closed"
+        ka: "A"
+        e: "后面小鸟飞出去，说明我们打开了盒子，open过去式opened。"
+      - q: q9
+        type: cloze
+        stem: "___10___"
+        o:
+          - k: A
+            t: "wonderful"
+          - k: B
+            t: "careful"
+          - k: C
+            t: "helpful"
+        ka: "B"
+        e: "Be careful 固定搭配，意思是小心一点，叮嘱小鸟下次小心。"
+
+  - g: g3
+    gt: "第四部分 阅读理解（一）"
+    t: single
+    gst: >
+      阅读理解答题说明：阅读短文，根据短文内容选择最佳答案。
+
+      Little Rabbit likes reading. Every afternoon he reads books under a big tree.
+      One day, he finds a new story‑book. It is about space.
+      He reads it for two hours and learns many interesting things about the moon.
+    i:
+      pd: "cartoon little rabbit reading story‑book under tree, flat kids textbook illustration, white background"
+    questions:
+      - q: q8
+        type: single
+        stem: "Where does Little Rabbit read books every afternoon?"
+        o:
+          - k: A
+            t: "At home."
+          - k: B
+            t: "Under a big tree."
+          - k: C
+            t: "In the library."
+        ka: "B"
+        e: "短文第二句 Every afternoon he reads books under a big tree，答案B。"
+      - q: q9
+        type: single
+        stem: "What is the new story‑book about?"
+        o:
+          - k: A
+            t: "Space."
+          - k: B
+            t: "Animals."
+          - k: C
+            t: "Sea."
+        ka: "A"
+        e: "文中写 It is about space，选A。"
+
+  - g: g4
+    gt: "第五部分 阅读理解（二）"
+    t: single
+    gst: >
+      阅读理解答题说明：阅读下面短文，选择正确答案。
+
+      Tom is 12 years old. He likes sports very much. On weekends he usually gets up at eight o’clock.
+      He often plays basketball with his friends in the park. Sometimes he goes cycling.
+      He says doing sports makes him strong and happy.
+    questions:
+      - q: q10
+        type: single
+        stem: "How old is Tom?"
+        o:
+          - k: A
+            t: "Eleven."
+          - k: B
+            t: "Twelve."
+          - k: C
+            t: "Thirteen."
+        ka: "B"
+        e: "短文第一句 Tom is 12 years old，所以选B。"
+      - q: q11
+        type: single
+        stem: "What does Tom often do on weekends?"
+        o:
+          - k: A
+            t: "Plays basketball."
+          - k: B
+            t: "Swims."
+          - k: C
+            t: "Watches TV."
+        ka: "A"
+        e: "文中 He often plays basketball with his friends in the park，选A。"
+  - g: g5
+    gt: "第五部分 阅读理解(三)"
+    t: single
+    gst: >
+      阅读理解答题说明：阅读短文，选择正确答案。
+      Hello, I’m Tom. I’m eleven years old. I go to school from Monday to Friday. My favourite day is Friday. We have PE and art on Fridays. I like PE very much. I can play basketball. My PE teacher is Mr Hu. He is tall and strong. He is very kind. I like him.
+    i:
+      pd: "cartoon boy play basketball with PE teacher, flat textbook illustration, white background"
+    questions:
+      - q: q21
+        type: single
+        stem: "1. How old is Tom?"
+        o:
+          - k: A
+            t: "Ten."
+          - k: B
+            t: "Eleven."
+          - k: C
+            t: "Twelve."
+        ka: "B"
+        e: "短文第一句 I’m eleven years old，选B。"
+      - q: q22
+        type: single
+        stem: "2. What classes does Tom have on Friday?"
+        o:
+          - k: A
+            t: "PE and art."
+          - k: B
+            t: "Maths and art."
+          - k: C
+            t: "PE and music."
+        ka: "A"
+        e: "原文 We have PE and art on Fridays，选A。"
+      - q: q23
+        type: single
+        stem: "3. What can Tom do in PE class?"
+        o:
+          - k: A
+            t: "Play ping-pong."
+          - k: B
+            t: "Play basketball."
+          - k: C
+            t: "Play football."
+        ka: "B"
+        e: "原文 I can play basketball，选B。"
+      - q: q24
+        type: single
+        stem: "4. What’s Tom’s PE teacher like?"
+        o:
+          - k: A
+            t: "He is tall, strong and kind."
+          - k: B
+            t: "He is funny."
+          - k: C
+            t: "He is quiet."
+        ka: "A"
+        e: "原文 He is tall and strong. He is very kind，选A。"
