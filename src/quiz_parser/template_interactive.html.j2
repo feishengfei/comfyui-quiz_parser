@@ -167,7 +167,6 @@ const quizRawData = {{ quiz | tojson | safe }};
 const imgMap = {{ img_map | tojson | safe }};
 const audioMap = {{ audio_map | tojson | safe }};
 const shuffleFlag = {{ shuffle | lower | safe }};
-
 let correctSet = new Set();
 let wrongSet = new Set();
 let questionList = [];
@@ -213,7 +212,7 @@ function updateScore(){
     document.getElementById("cnt-err").textContent = err;
 }
 
-// 渲染单个小题
+// 渲染单个小题：只渲染【题目自身音频、题目自身图片】，group音图挪到group块渲染
 function renderOneQuestion(qWrapper, qGlobalIdx){
     const div = document.createElement("div");
     div.className = "question-container";
@@ -221,19 +220,13 @@ function renderOneQuestion(qWrapper, qGlobalIdx){
     const q = qWrapper.question;
 
     let audioHtml = "";
-    if(qWrapper.groupAudioKey && audioMap[qWrapper.groupAudioKey]){
-        audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[qWrapper.groupAudioKey]}"></div>`;
-    }
+    // 仅渲染小题自身音频，group共享音频在group块统一渲染
     if(q._audio_logic_path && audioMap[q._audio_logic_path]){
         audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[q._audio_logic_path]}"></div>`;
     }
 
     let imgHtml = "";
-    for(const sp of (qWrapper.groupImagePaths ?? [])){
-        if(imgMap[sp]){
-            imgHtml += `<img class="q-img" src="${imgMap[sp]}">`;
-        }
-    }
+    // 仅渲染小题自身图片，group共享图片在group块统一渲染
     const qImgPaths = q._image_logic_paths ?? [];
     for(const sp of qImgPaths){
         if(imgMap[sp]){
@@ -281,7 +274,6 @@ function bindEvents(){
         radio.onchange = (ev)=>{
             const inp = ev.target;
             const qid = inp.closest(".opt-row").dataset.qid;
-            const userSel = inp.value;
             const idx = Number(qid);
             if (!Number.isInteger(idx) || idx < 0 || idx >= questionList.length) return;
             const targetQ = questionList[idx].question;
@@ -289,7 +281,7 @@ function bindEvents(){
             document.querySelectorAll(`.opt-row[data-qid="${qid}"]`).forEach(r=>{
                 r.classList.remove("correct-mark","wrong-mark");
             })
-            if(userSel === correctKey){
+            if(inp.value === correctKey){
                 correctSet.add(qid);
                 wrongSet.delete(qid);
                 inp.closest(".opt-row").classList.add("correct-mark");
@@ -316,7 +308,6 @@ function main(){
     console.log("quizRawData groups", quizRawData.groups);
 
     const groupWrappers = buildGroupWrapper(quizRawData);
-    // shuffle 只打乱题目顺序，group结构保留；收集全部题目用于判分
     let allQWrapper = [];
     for(const gw of groupWrappers){
         allQWrapper.push(...gw.questionWrappers);
@@ -330,7 +321,6 @@ function main(){
     root.innerHTML = "";
 
     let globalQIdx = 0;
-    // 按group渲染，保留group容器，输出groupTitle → gst篇章文本 → 本组小题
     for(const gw of groupWrappers){
         const gBlock = document.createElement("div");
         gBlock.className = "group-block";
@@ -341,7 +331,7 @@ function main(){
         gTitleEl.textContent = gw.group.gt;
         gBlock.appendChild(gTitleEl);
 
-        // ========== 渲染 group.gst 共享篇章文本 ==========
+        // 渲染 group.gst 共享篇章文本
         if(gw.group.gst){
             const gstEl = document.createElement("div");
             gstEl.className = "group-shared-text";
@@ -349,9 +339,27 @@ function main(){
             gBlock.appendChild(gstEl);
         }
 
+        // 【组级别：共享图片，仅渲染一次】
+        const groupImgPaths = gw.group._image_logic_paths ?? [];
+        for(const sp of groupImgPaths){
+            if(imgMap[sp]){
+                const imgEl = document.createElement("img");
+                imgEl.className = "q-img";
+                imgEl.src = imgMap[sp];
+                gBlock.appendChild(imgEl);
+            }
+        }
+
+        // 【组级别：共享音频，仅渲染一次】
+        if(gw.group._audio_logic_path && audioMap[gw.group._audio_logic_path]){
+            const audioWrap = document.createElement("div");
+            audioWrap.className = "audio-wrap";
+            audioWrap.innerHTML = `<audio controls src="${audioMap[gw.group._audio_logic_path]}">`;
+            gBlock.appendChild(audioWrap);
+        }
+
         // 渲染本组全部小题
         for(const qWrap of gw.questionWrappers){
-            // shuffle开启时从打乱后的allQWrapper找到当前qWrap的全局序号
             const realIdx = questionList.indexOf(qWrap);
             const qDom = renderOneQuestion(qWrap, realIdx);
             gBlock.appendChild(qDom);
