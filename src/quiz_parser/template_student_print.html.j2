@@ -74,6 +74,16 @@ body {
     /* 不强制固定宽度；空间不足自动换行，允许长短不一样 */
     flex: 0 1 auto;
 }
+.tf-line {
+    margin:6pt 0 8pt 0;
+    font-size:11pt;
+}
+.fill-underline {
+    display:block;
+    margin:6pt 0 8pt 0;
+    border-bottom: 1px solid black;
+    height:14pt;
+}
 .question-wrap, .group-block {
     page-break-inside: avoid;
 }
@@ -111,12 +121,19 @@ body {
                 <img class="q-img" src="{{ img_map[sp] }}" />
             {% endfor %}
         {% endif %}
-        {% if q.o %}
-        <ul class="options-list">
-            {% for opt in q.o %}
-            <li>{{ opt.k }}. {{ opt.t }}</li>
-            {% endfor %}
-        </ul>
+        {% set qtype = q.type | default("single") %}
+        {% if qtype == "single" or qtype == "cloze" %}
+            {% if q.o %}
+            <ul class="options-list">
+                {% for opt in q.o %}
+                <li>{{ opt.k }}. {{ opt.t }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        {% elif qtype == "tf" %}
+            <div class="tf-line">☐ T&nbsp;&nbsp;&nbsp;☐ F</div>
+        {% elif qtype == "fill" %}
+            <div class="fill-underline"></div>
         {% endif %}
     </div>
     {% endfor %}

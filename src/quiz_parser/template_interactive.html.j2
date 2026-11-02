@@ -109,6 +109,15 @@ input[type="radio"] {
     height:18px;
     cursor:pointer;
 }
+.input-fill-box {
+    width:100%;
+    padding:8px 10px;
+    font-size:16px;
+    border-radius:4px;
+    border:1px solid #475569;
+    background:#1e293b;
+    color:#e2e8f0;
+}
 .correct-mark {
     border:2px solid #10b981;
 }
@@ -218,13 +227,13 @@ function renderOneQuestion(qWrapper, qGlobalIdx){
     div.className = "question-container";
     div.dataset.qid = String(qGlobalIdx);
     const q = qWrapper.question;
+    const qType = q.type ?? "single";
 
     let audioHtml = "";
     // 仅渲染小题自身音频，group共享音频在group块统一渲染
     if(q._audio_logic_path && audioMap[q._audio_logic_path]){
         audioHtml += `<div class="audio-wrap"><audio controls src="${audioMap[q._audio_logic_path]}"></div>`;
     }
-
     let imgHtml = "";
     // 仅渲染小题自身图片，group共享图片在group块统一渲染
     const qImgPaths = q._image_logic_paths ?? [];
@@ -235,7 +244,8 @@ function renderOneQuestion(qWrapper, qGlobalIdx){
     }
 
     let optHtml = "";
-    if(q.o){
+    if(qType === "single" || qType === "cloze"){
+        // 原有单选逻辑
         const alpha = ["A","B","C","D","E","F"];
         q.o.forEach((opt, oIdx)=>{
             optHtml += `
@@ -244,6 +254,23 @@ function renderOneQuestion(qWrapper, qGlobalIdx){
                 <label for="opt_${qGlobalIdx}_${oIdx}">${opt.t}</label>
             </div>`
         })
+    }else if(qType === "tf"){
+        // 判断正误 T / F
+        optHtml += `
+        <div class="opt-row" data-opt-key="true" data-qid="${qGlobalIdx}">
+            <input type="radio" name="q_${qGlobalIdx}" id="opt_${qGlobalIdx}_t" value="true">
+            <label for="opt_${qGlobalIdx}_t">T (正确)</label>
+        </div>
+        <div class="opt-row" data-opt-key="false" data-qid="${qGlobalIdx}">
+            <input type="radio" name="q_${qGlobalIdx}" id="opt_${qGlobalIdx}_f" value="false">
+            <label for="opt_${qGlobalIdx}_f">F (错误)</label>
+        </div>`;
+    }else if(qType === "fill"){
+        // 文本填空输入框
+        optHtml += `
+        <div class="options-wrap">
+            <input class="input-fill-box" data-qid="${qGlobalIdx}" type="text" placeholder="请在此填写答案">
+        </div>`;
     }
 
     div.innerHTML = `
@@ -260,6 +287,7 @@ function renderOneQuestion(qWrapper, qGlobalIdx){
 }
 
 function bindEvents(){
+    // 解析弹窗
     document.querySelectorAll(".btn-explain").forEach(btn=>{
         btn.onclick = (ev)=>{
             const qIdx = Number(ev.target.dataset.qidx);
@@ -270,6 +298,8 @@ function bindEvents(){
             modal.showModal();
         }
     })
+
+    // radio单选事件（single/cloze / tf）
     document.querySelectorAll(".opt-row input[type='radio']").forEach(radio=>{
         radio.onchange = (ev)=>{
             const inp = ev.target;
@@ -277,18 +307,46 @@ function bindEvents(){
             const idx = Number(qid);
             if (!Number.isInteger(idx) || idx < 0 || idx >= questionList.length) return;
             const targetQ = questionList[idx].question;
-            const correctKey = targetQ.ka;
+            let isOk = false;
+            if(targetQ.type === "tf"){
+                const userVal = inp.value === "true";
+                isOk = (userVal === targetQ.tf_correct);
+            }else{
+                isOk = (inp.value === targetQ.ka);
+            }
             document.querySelectorAll(`.opt-row[data-qid="${qid}"]`).forEach(r=>{
                 r.classList.remove("correct-mark","wrong-mark");
             })
-            if(inp.value === correctKey){
-                correctSet.add(qid);
-                wrongSet.delete(qid);
+            if(isOk){
+                correctSet.add(String(qid));
+                wrongSet.delete(String(qid));
                 inp.closest(".opt-row").classList.add("correct-mark");
             }else{
-                wrongSet.add(qid);
-                correctSet.delete(qid);
+                wrongSet.add(String(qid));
+                correctSet.delete(String(qid));
                 inp.closest(".opt-row").classList.add("wrong-mark");
+            }
+            updateScore();
+        }
+    })
+
+    // fill填空输入框失去焦点判分（简易：trim+小写比对）
+    document.querySelectorAll(".input-fill-box").forEach(input=>{
+        input.onblur = (ev)=>{
+            const idx = Number(ev.target.dataset.qid);
+            if (!Number.isInteger(idx) || idx < 0 || idx >= questionList.length) return;
+            const targetQ = questionList[idx].question;
+            if(targetQ.type !== "fill") return;
+            const userAns = ev.target.value.trim().toLowerCase();
+            const acceptSet = new Set(targetQ.fill_keys.map(s=>s.trim().toLowerCase()));
+            if(acceptSet.has(userAns)){
+                correctSet.add(String(idx));
+                wrongSet.delete(String(idx));
+                ev.target.style.borderColor="#10b981";
+            }else{
+                wrongSet.add(String(idx));
+                correctSet.delete(String(idx));
+                ev.target.style.borderColor="#ef4444";
             }
             updateScore();
         }
@@ -302,11 +360,9 @@ function main(){
             modal.close();
         }
     });
-
     console.log("=== DEBUG ===");
     console.log("imgMap keys", Object.keys(imgMap));
     console.log("quizRawData groups", quizRawData.groups);
-
     const groupWrappers = buildGroupWrapper(quizRawData);
     let allQWrapper = [];
     for(const gw of groupWrappers){
@@ -316,21 +372,17 @@ function main(){
         allQWrapper = shuffleArray(allQWrapper);
     }
     questionList = allQWrapper;
-
     const root = document.getElementById("quiz-root");
     root.innerHTML = "";
-
     let globalQIdx = 0;
     for(const gw of groupWrappers){
         const gBlock = document.createElement("div");
         gBlock.className = "group-block";
-
         // group大题标题
         const gTitleEl = document.createElement("div");
         gTitleEl.className = "group-title";
         gTitleEl.textContent = gw.group.gt;
         gBlock.appendChild(gTitleEl);
-
         // 渲染 group.gst 共享篇章文本
         if(gw.group.gst){
             const gstEl = document.createElement("div");
@@ -338,7 +390,6 @@ function main(){
             gstEl.textContent = gw.group.gst;
             gBlock.appendChild(gstEl);
         }
-
         // 【组级别：共享图片，仅渲染一次】
         const groupImgPaths = gw.group._image_logic_paths ?? [];
         for(const sp of groupImgPaths){
@@ -349,7 +400,6 @@ function main(){
                 gBlock.appendChild(imgEl);
             }
         }
-
         // 【组级别：共享音频，仅渲染一次】
         if(gw.group._audio_logic_path && audioMap[gw.group._audio_logic_path]){
             const audioWrap = document.createElement("div");
@@ -357,7 +407,6 @@ function main(){
             audioWrap.innerHTML = `<audio controls src="${audioMap[gw.group._audio_logic_path]}">`;
             gBlock.appendChild(audioWrap);
         }
-
         // 渲染本组全部小题
         for(const qWrap of gw.questionWrappers){
             const realIdx = questionList.indexOf(qWrap);
@@ -367,7 +416,6 @@ function main(){
         }
         root.appendChild(gBlock);
     }
-
     bindEvents();
     updateScore();
 }

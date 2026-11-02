@@ -51,7 +51,6 @@ groups:
             t: "Grapes and peaches."
         ka: "A"
         e: "对话结尾提到 We picked some apples and pears，选A。"
-
   - g: g1
     gt: "第二部分 单项选择 语法与词汇"
     t: single
@@ -152,20 +151,15 @@ groups:
             t: "I'm sorry!"
         ka: "A"
         e: "听到别人的才艺展示，用Wonderful! 太棒了！来夸奖。"
-
   - g: g2
     gt: "完形填空"
     t: cloze
     gst: >
       完形填空答题说明：阅读下面短文，从A、B、C三个选项中选出最佳答案补全短文。
-
       My name is Anna. My family lives in a big ___1___. It has a lot of big windows. There ___2___ many trees outside.
       The birds like to ___3___ around my house.
-
       One day, ___4___ unexpected(意料之外) thing happened. My brother and I were drawing pictures when a sparrow(麻雀) knocked on the window.
-
       We rushed outside ___5___ picked up the little sparrow. My brother said, “The little sparrow got hurt. We should ___6___ it.” The sparrow looked so young. Then, we ___7___ it inside and put it in a warm and dark box. We hoped it would get better. Later, we gave it some water and food.
-
       The next day, we could hear something ___8___ the box. We ___9___ the box. Whoosh! The bird flew outside. “Be ___10___ next time, little sparrow!” we said. The little sparrow flew away, but we were very happy.
     i:
       pd: "cartoon girl and boy help a hurt sparrow, flat textbook illustration, white background"
@@ -290,13 +284,11 @@ groups:
             t: "helpful"
         ka: "B"
         e: "Be careful 固定搭配，意思是小心一点，叮嘱小鸟下次小心。"
-
   - g: g3
     gt: "第四部分 阅读理解（一）"
     t: single
     gst: >
       阅读理解答题说明：阅读短文，根据短文内容选择最佳答案。
-
       Little Rabbit likes reading. Every afternoon he reads books under a big tree.
       One day, he finds a new story‑book. It is about space.
       He reads it for two hours and learns many interesting things about the moon.
@@ -327,13 +319,11 @@ groups:
             t: "Sea."
         ka: "A"
         e: "文中写 It is about space，选A。"
-
   - g: g4
     gt: "第五部分 阅读理解（二）"
     t: single
     gst: >
       阅读理解答题说明：阅读下面短文，选择正确答案。
-
       Tom is 12 years old. He likes sports very much. On weekends he usually gets up at eight o’clock.
       He often plays basketball with his friends in the park. Sometimes he goes cycling.
       He says doing sports makes him strong and happy.
@@ -419,3 +409,38 @@ groups:
             t: "He is quiet."
         ka: "A"
         e: "原文 He is tall and strong. He is very kind，选A。"
+
+  # === 新增：阅读判断正误 tf 题型示例 ===
+  - g: g6
+    gt: "第六部分 阅读判断（T/F）"
+    t: single
+    gst: >
+      阅读判断答题说明：阅读短文，判断下面句子正确写T，错误写F。
+      Tom is 12. He gets up at 8:00 on weekends. He often plays basketball in the park.
+    questions:
+      - q: q25
+        type: tf
+        stem: "Tom is twelve years old."
+        tf_correct: true
+        e: "原文第一句 Tom is 12，句子表述正确。"
+      - q: q26
+        type: tf
+        stem: "Tom often plays football in the park."
+        tf_correct: false
+        e: "原文是plays basketball，不是football，句子错误。"
+
+  # === 新增：语法填空 fill 题型示例 ===
+  - g: g7
+    gt: "第七部分 用括号内单词适当形式填空"
+    t: single
+    questions:
+      - q: q27
+        type: fill
+        stem: "He often ______ (watch) TV in the evening."
+        fill_keys: ["watches"]
+        e: "often一般现在时，主语he三单，watch变为watches。"
+      - q: q28
+        type: fill
+        stem: "There are three ______ (child) in the room."
+        fill_keys: ["children"]
+        e: "three后面接复数，child的复数是children。"
