@@ -143,22 +143,24 @@ def main():
         "shuffle": args.shuffle
     }
 
+    yaml_basename = os.path.basename(quiz_yaml_abs)
+
     # 1. 交互网页，输出至yaml同级目录
     html_interactive = render_html(jinja_env, "template_interactive.html.j2", ctx)
-    out_html_path = os.path.join(yaml_base_dir, "interactive.html")
+    out_html_path = os.path.join(yaml_base_dir, f"{yaml_basename}.html")
     with open(out_html_path, "w", encoding="utf‑8") as f:
         f.write(html_interactive)
     print(f"✅ 已生成: {out_html_path}")
 
     # 2. 学生打印版PDF
     html_student = render_html(jinja_env, "template_student_print.html.j2", ctx)
-    pdf_student = os.path.join(yaml_base_dir, "student.pdf")
+    pdf_student = os.path.join(yaml_base_dir, f"{yaml_basename}.pdf")
     html_to_pdf(html_student, pdf_student)
     print(f"✅ 已生成: {pdf_student}")
 
     # 3. 教师打印版PDF
     html_teacher = render_html(jinja_env, "template_teacher_print.html.j2", ctx)
-    pdf_teacher = os.path.join(yaml_base_dir, "teacher.pdf")
+    pdf_teacher = os.path.join(yaml_base_dir, f"{yaml_basename}_answer.pdf")
     html_to_pdf(html_teacher, pdf_teacher)
     print(f"✅ 已生成: {pdf_teacher}")
 
