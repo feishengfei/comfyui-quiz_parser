@@ -26,7 +26,7 @@ PDF_MARGIN_RIGHT = "15mm"
 # ====================================
 
 # 脚本自身所在目录（模板j2文件存放于此）
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 
 def read_file_as_b64(file_path: str, mime_type: str) -> str:
     """读取二进制文件返回 base64 data‑url字符串"""
