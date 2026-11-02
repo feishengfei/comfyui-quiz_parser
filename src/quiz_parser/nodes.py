@@ -1,6 +1,5 @@
 import yaml
 from .resource_extract import collect_resources
-
 class QuizParseExtractAudio:
     @classmethod
     def INPUT_TYPES(cls):
@@ -9,17 +8,37 @@ class QuizParseExtractAudio:
                 "yaml_text": ("STRING", {"multiline": True, "tooltip": "完整试卷YAML文本"}),
             }
         }
-    RETURN_TYPES = ("ANY",)
+    RETURN_TYPES = ("ANY", "STRING",)
+    RETURN_NAMES = ("audio_resource_list", "transcript_text")
     FUNCTION = "execute"
     CATEGORY = "QuizParser/Extract"
-    DESCRIPTION = "从试卷YAML提取全部audio(a)资源，输出扁平化资源list[dict]"
+    DESCRIPTION = "从试卷YAML提取全部audio(a)资源，输出扁平化资源list[dict]；同时输出带分组标题的音频文字稿"
     def execute(self, yaml_text: str):
         if not yaml_text or not yaml_text.strip():
-            return ([],)
+            return ([], "")
         data = yaml.safe_load(yaml_text)
         res_list = collect_resources(data, resource_kind="audio")
-        return (res_list,)
 
+        # 组装文稿文本
+        transcript_lines = []
+        groups = data.get("groups", [])
+        for g in groups:
+            gt_title = g.get("gt", "")
+            a_node = g.get("a")
+            if not a_node or not isinstance(a_node, dict):
+                continue
+            pd_list = a_node.get("pd", [])
+            if not pd_list or not isinstance(pd_list, list):
+                continue
+            if gt_title:
+                transcript_lines.append(f"[{gt_title}]")
+            for entry in pd_list:
+                sp = entry.get("sp", "")
+                txt = entry.get("txt", "")
+                if sp and txt:
+                    transcript_lines.append(f"{sp}: {txt}")
+        transcript_text = "\n".join(transcript_lines)
+        return (res_list, transcript_text)
 
 class QuizParseExtractImage:
     @classmethod
@@ -46,7 +65,6 @@ class QuizParseExtractImage:
             return ([], [])
         data = yaml.safe_load(yaml_text)
         res_list = collect_resources(data, resource_kind="image")
-
         zipped = []
         # 同一个循环同时组装两份，保证索引严格对齐
         for item in res_list:
@@ -55,7 +73,6 @@ class QuizParseExtractImage:
             pd = item.get("pd", "")
             zipped.append((pd,))
         return ((zipped), )
-
 
 class QuizUnzipPrompt:
     @classmethod
@@ -74,17 +91,14 @@ class QuizUnzipPrompt:
     def execute(self, zipped_prompt):
         return zipped_prompt
 
-
 NODE_CLASS_MAPPINGS = {
     "QuizParseExtractAudio": QuizParseExtractAudio,
     "QuizParseExtractImage": QuizParseExtractImage,
     "QuizUnzipPrompt": QuizUnzipPrompt,
 }
-
 NODE_DISPLAY_NAME_MAPPINGS = {
     "QuizParseExtractAudio": "Quiz: Extract Audio Resources",
     "QuizParseExtractImage": "Quiz: Extract Image Resources",
     "QuizUnzipPrompt": "Quiz: Unzip Prompt",
 }
-
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]

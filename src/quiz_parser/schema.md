@@ -19,7 +19,7 @@
 | `a` | object | 【可选】**group层级音频对象，只允许挂在group顶层，小题禁止配置a**。听力大题在这里写对话。 |
 | `a.pd` | array[object] | audio‑prompt‑data，音频对话脚本数组，多条对话依次播放 |
 | `a.pd[].txt` | string | 角色的外文台词文本 |
-| `a.pd[].sp` | string | speaker说话人，**只允许固定集合**：`sophie` / `en‑mature_woman` / `en‑alice_woman` / `clint` / `morgan`，每人都会英语、中文、日语、韩语 |
+| `a.pd[].sp` | string | speaker说话人，**只允许固定集合**：`sophie` / `mature_woman` / `alice_woman` / `clint` / `morgan`，每人都会英语、中文、日语、韩语 |
 | `a.pd[].gap` | float | 说完本句之后停顿多少秒，如 `0.8`、`1.0` |
 | `i` | object / array[object] | 【可选】group顶层图片；单图写对象，多图写数组；**只包含pd字段，不要写磁盘路径** |
 | `i.pd` | string | image‑prompt‑data，AI绘图正向提示词，扁平儿童教材插画风格 |
