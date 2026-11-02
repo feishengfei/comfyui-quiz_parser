@@ -14,7 +14,7 @@
 }
 body {
     font-family: "Noto Sans SC", system-ui, sans-serif;
-    font-size:14pt;
+    font-size:10pt;
     line-height:1.6;
 }
 .quiz-header{
@@ -22,12 +22,12 @@ body {
     margin-bottom:18pt;
 }
 .quiz-title{
-    font-size:20pt;
+    font-size:16pt;
     font-weight:bold;
     margin-bottom:8pt;
 }
 .quiz-desc{
-    font-size:13pt;
+    font-size:9pt;
     color:#444;
 }
 .info-row{
@@ -40,7 +40,7 @@ body {
     margin-bottom:22pt;
 }
 .group-title{
-    font-size:16pt;
+    font-size:12pt;
     font-weight:bold;
     margin-bottom:10pt;
     border-bottom:1px solid #aaa;
@@ -58,15 +58,21 @@ body {
 }
 .q-img{
     max-width:100%;
-    max-height:16cm;
+    max-height:3cm;
     margin:8pt 0;
 }
-.options-list{
-    list-style-type:upper-alpha;
-    padding-left:24pt;
+.options-list {
+    list-style: none;
+    padding-left: 0pt;
+    display: flex;
+    flex-direction: row;
+    gap: 22pt;
+    flex-wrap: wrap;
+    margin: 6pt 0 8pt 0;
 }
-.options-list li{
-    margin-bottom:4pt;
+.options-list li {
+    /* 不强制固定宽度；空间不足自动换行，允许长短不一样 */
+    flex: 0 1 auto;
 }
 .question-wrap, .group-block {
     page-break-inside: avoid;
@@ -99,7 +105,7 @@ body {
     {% endif %}
     {% for q in g.questions %}
     <div class="question-wrap">
-        <div><b>题目 {{ loop.index }}：{{ q.stem }} </b></div>
+        <div><b>{{ loop.index }}：{{ q.stem }} </b></div>
         {% if q._image_logic_paths %}
             {% for sp in q._image_logic_paths %}
                 <img class="q-img" src="{{ img_map[sp] }}" />
@@ -108,7 +114,7 @@ body {
         {% if q.o %}
         <ul class="options-list">
             {% for opt in q.o %}
-            <li>{{ opt.t }}</li>
+            <li>{{ opt.k }}. {{ opt.t }}</li>
             {% endfor %}
         </ul>
         {% endif %}
