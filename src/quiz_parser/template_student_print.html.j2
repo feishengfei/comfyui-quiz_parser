@@ -99,7 +99,7 @@ body {
     {% endif %}
     {% for q in g.questions %}
     <div class="question-wrap">
-        <div>题目 {{ loop.index }}：{{ q.stem }}</div>
+        <div><b>题目 {{ loop.index }}：{{ q.stem }} </b></div>
         {% if q._image_logic_paths %}
             {% for sp in q._image_logic_paths %}
                 <img class="q-img" src="{{ img_map[sp] }}" />

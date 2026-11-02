@@ -117,12 +117,12 @@ body {
     {% for q in g.questions %}
     <div class="question‑wrap">
         <div class="q‑label‑row">
-            <div class="q‑label">题目 {{ loop.index }}：</div>
+            <div class="q‑label"><b>题目 {{ loop.index }}：</b></div>
             {% if q.ka %}
             <div class="q‑answer‑tag">正确答案：{{ q.ka }}</div>
             {% endif %}
         </div>
-        <div class="q‑stem">{{ q.stem }}</div>
+        <div class="q‑stem"><b>{{ q.stem }} </b></div>
         {# 题目图片，从回填的路径列表读取 #}
         {% if q._image_logic_paths %}
             {% for sp in q._image_logic_paths %}
@@ -132,7 +132,7 @@ body {
         {% if q.o %}
         <ul class="options‑list">
             {% for opt in q.o %}
-            <li>{{ opt.t }}</li>
+            <li>{{ opt.k }}. {{ opt.t }}</li>
             {% endfor %}
         </ul>
         {% endif %}
