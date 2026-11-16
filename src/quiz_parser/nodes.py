@@ -1,4 +1,5 @@
 import yaml
+from pathlib import Path
 from .resource_extract import collect_resources
 class QuizParseExtractAudio:
     @classmethod
@@ -92,15 +93,75 @@ class QuizUnzipPrompt:
             return ""
         return zipped_prompt
 
+class PathGetBasename:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "file_path": ("STRING", {
+                    "multiline": False,
+                    "default": "",
+                    "tooltip": "输入文件路径字符串，输出路径的basename（文件名）"
+                }),
+            }
+        }
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("basename",)
+    FUNCTION = "execute"
+    CATEGORY = "QuizParser/Util"
+    DESCRIPTION = "输入文件路径字符串，提取返回 basename(文件名，不含目录)"
+
+    def execute(self, file_path: str):
+        if not file_path or not file_path.strip():
+            return ("", )
+        try:
+            p = Path(file_path.strip())
+            basename_str = p.name
+        except Exception:
+            basename_str = ""
+        return (basename_str,)
+
+class PathGetFileStem:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "file_path": ("STRING", {
+                    "multiline": False,
+                    "default": "",
+                    "tooltip": "输入文件路径字符串，输出文件stem：去除目录与扩展名，仅主文件名"
+                }),
+            }
+        }
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("stem",)
+    FUNCTION = "execute"
+    CATEGORY = "QuizParser/Util"
+    DESCRIPTION = "输入文件路径字符串，提取stem（剔除目录、文件后缀，仅主文件名）"
+
+    def execute(self, file_path: str):
+        if not file_path or not file_path.strip():
+            return ("", )
+        try:
+            p = Path(file_path.strip())
+            stem_str = p.stem
+        except Exception:
+            stem_str = ""
+        return (stem_str,)
+
 
 NODE_CLASS_MAPPINGS = {
     "QuizParseExtractAudio": QuizParseExtractAudio,
     "QuizParseExtractImage": QuizParseExtractImage,
     "QuizUnzipPrompt": QuizUnzipPrompt,
+    "PathGetBasename": PathGetBasename,
+    "PathGetFileStem": PathGetFileStem,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "QuizParseExtractAudio": "Quiz: Extract Audio Resources",
     "QuizParseExtractImage": "Quiz: Extract Image Resources",
     "QuizUnzipPrompt": "Quiz: Unzip Prompt",
+    "PathGetBasename": "Util: Get Path Basename",
+    "PathGetFileStem": "Util: Get Path File Stem",
 }
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
