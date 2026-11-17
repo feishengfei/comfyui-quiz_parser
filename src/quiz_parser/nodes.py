@@ -9,18 +9,20 @@ class QuizParseExtractAudio:
                 "yaml_text": ("STRING", {"multiline": True, "tooltip": "完整试卷YAML文本"}),
             }
         }
-    RETURN_TYPES = ("ANY", "STRING",)
-    RETURN_NAMES = ("audio_resource_list", "transcript_text")
+    RETURN_TYPES = ("ANY", "STRING", "STRING",)
+    RETURN_NAMES = ("audio_resource_list", "transcript_text", "tts_plain_text")
     FUNCTION = "execute"
     CATEGORY = "QuizParser/Extract"
-    DESCRIPTION = "从试卷YAML提取全部audio(a)资源，输出扁平化资源list[dict]；同时输出带分组标题的音频文字稿"
+    DESCRIPTION = "从试卷YAML提取全部audio(a)资源，输出扁平化资源list[dict]；同时输出带分组标题的音频文字稿；新增tts_plain_text为去掉分组标题、去掉speaker的纯tts台词"
     def execute(self, yaml_text: str):
         if not yaml_text or not yaml_text.strip():
-            return ([], "")
+            return ([], "", "")
         data = yaml.safe_load(yaml_text)
         res_list = collect_resources(data, resource_kind="audio")
-        # 组装文稿文本
+        # 组装带分组标题+角色的文稿文本
         transcript_lines = []
+        # 组装纯tts文本：过滤gt标题，过滤speaker，只取txt
+        tts_plain_lines = []
         groups = data.get("groups", [])
         for g in groups:
             gt_title = g.get("gt", "")
@@ -37,8 +39,11 @@ class QuizParseExtractAudio:
                 txt = entry.get("txt", "")
                 if sp and txt:
                     transcript_lines.append(f"{sp}: {txt}")
+                    # 纯tts，只加入txt原文
+                    tts_plain_lines.append(txt.strip())
         transcript_text = "\n".join(transcript_lines)
-        return (res_list, transcript_text)
+        tts_plain_text = "\n".join(tts_plain_lines)
+        return (res_list, transcript_text, tts_plain_text)
 
 
 class QuizParseExtractImage:
