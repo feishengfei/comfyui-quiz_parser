@@ -149,6 +149,41 @@ class PathGetFileStem:
             stem_str = ""
         return (stem_str,)
 
+class PoemMetaParse:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "yaml_text": ("STRING", {
+                    "multiline": True,
+                    "default": "",
+                    "tooltip": "schema_poem规范YAML文本，解析poem_meta下title、author_or_source、dynasty"
+                }),
+            }
+        }
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("title", "author_or_source", "dynasty")
+    FUNCTION = "execute"
+    CATEGORY = "QuizParser/Poem"
+    DESCRIPTION = "解析schema_poem YAML的poem_meta，输出title, author_or_source, dynasty，缺失字段返回空字符串"
+
+    def execute(self, yaml_text: str):
+        title_out = ""
+        author_out = ""
+        dynasty_out = ""
+        if not yaml_text or not yaml_text.strip():
+            return (title_out, author_out, dynasty_out)
+        try:
+            data = yaml.safe_load(yaml_text)
+            if isinstance(data, dict):
+                meta = data.get("poem_meta", {})
+                if isinstance(meta, dict):
+                    title_out = meta.get("title", "").strip()
+                    author_out = meta.get("author_or_source", "").strip()
+                    dynasty_out = meta.get("dynasty", "").strip()
+        except Exception as e:
+            print(f"[WARN PoemMetaParse] parse error: {str(e)}")
+        return (title_out, author_out, dynasty_out)
 
 NODE_CLASS_MAPPINGS = {
     "QuizParseExtractAudio": QuizParseExtractAudio,
@@ -156,6 +191,7 @@ NODE_CLASS_MAPPINGS = {
     "QuizUnzipPrompt": QuizUnzipPrompt,
     "PathGetBasename": PathGetBasename,
     "PathGetFileStem": PathGetFileStem,
+    "PoemMetaParse": PoemMetaParse,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "QuizParseExtractAudio": "Quiz: Extract Audio Resources",
@@ -163,5 +199,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "QuizUnzipPrompt": "Quiz: Unzip Prompt",
     "PathGetBasename": "Util: Get Path Basename",
     "PathGetFileStem": "Util: Get Path File Stem",
+    "PoemMetaParse": "Poem: Parse poem_meta",
 }
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
