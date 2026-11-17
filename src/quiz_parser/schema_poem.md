@@ -12,8 +12,9 @@
 | `groups` | array[object] | 分镜数组；数组顺序即为视频播放顺序，每一项代表一个独立分镜 |
 | `poem_meta` | object | 诗词古文元信息 |
 | `poem_meta.title` | string | 诗词古文的标题 |
-| `poem_meta.author_or_source` | string | 诗词古文的作者，有时也可以是文章的出处（比如用"《》"书名号包裹）,这里统一用去掉书名号的版本 |
+| `poem_meta.author_or_source` | string | 诗词古文的作者，有时也可以是文章的出处（比如用"《》"书名号包裹） |
 | `poem_meta.dynasty` | string | 诗词古文的朝代。 |
+| `poem_meta.content` | String (multiline) | 原始诗词古文的正文部分 |
 
 
 
@@ -121,6 +122,14 @@ poem_meta:
   title: "两瞽"
   author_or_source: "刘元卿"
   dynasty: "明代"
+  content: |
+    新市有齐瞽者，性躁急。
+    行乞衢中，人弗避道，辄忿骂曰：“汝眼瞎耶？”市人以其瞽，多不较。
+    嗣有梁瞽者，性尤戾，亦行乞衢中。
+    遭之，相触而踬。
+    梁瞽固不知彼亦瞽也，乃起亦忿骂曰：“汝眼亦瞎耶？”
+    两瞽相诟。市人讪之。
+    噫！己罔人亦罔，而诘责无已者，何以异于是？
 
 groups:
   - g: g0

@@ -167,8 +167,8 @@ class PoemMetaParse:
                 }),
             }
         }
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("title", "author_or_source", "dynasty")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("title", "author_or_source", "dynasty", "content")
     FUNCTION = "execute"
     CATEGORY = "QuizParser/Poem"
     DESCRIPTION = "解析schema_poem YAML的poem_meta，输出title, author_or_source, dynasty，缺失字段返回空字符串"
@@ -177,8 +177,9 @@ class PoemMetaParse:
         title_out = ""
         author_out = ""
         dynasty_out = ""
+        content_out = ""
         if not yaml_text or not yaml_text.strip():
-            return (title_out, author_out, dynasty_out)
+            return (title_out, author_out, dynasty_out, content_out)
         try:
             data = yaml.safe_load(yaml_text)
             if isinstance(data, dict):
@@ -187,9 +188,10 @@ class PoemMetaParse:
                     title_out = meta.get("title", "").strip()
                     author_out = meta.get("author_or_source", "").strip()
                     dynasty_out = meta.get("dynasty", "").strip()
+                    content_out = meta.get("content", "").strip()
         except Exception as e:
             print(f"[WARN PoemMetaParse] parse error: {str(e)}")
-        return (title_out, author_out, dynasty_out)
+        return (title_out, author_out, dynasty_out, content_out)
 
 # -------------------- 新增ComfyUI节点类，粘贴到nodes.py的class区 --------------------
 class PomMltBuilder:
