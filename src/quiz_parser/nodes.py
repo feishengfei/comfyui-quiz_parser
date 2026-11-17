@@ -1,6 +1,7 @@
 import yaml
 from pathlib import Path
 from .resource_extract import collect_resources
+from .poem_mlt_builder import run_build
 class QuizParseExtractAudio:
     @classmethod
     def INPUT_TYPES(cls):
@@ -190,6 +191,39 @@ class PoemMetaParse:
             print(f"[WARN PoemMetaParse] parse error: {str(e)}")
         return (title_out, author_out, dynasty_out)
 
+# -------------------- 新增ComfyUI节点类，粘贴到nodes.py的class区 --------------------
+class PomMltBuilder:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "trigger": ("BOOLEAN", {"default": False, "tooltip":"上游trigger信号，True才执行本节点逻辑"}),
+                "yaml_file_path": ("STRING", {
+                    "multiline": False,
+                    "default": "",
+                    "tooltip":"YAML文件绝对路径，同级目录需要存在同名.mlt模板"
+                }),
+            },
+            "optional": {
+                "backup_original_mlt": ("BOOLEAN", {"default": False, "tooltip":"是否备份原始mlt为 *.bak.mlt；ComfyUI默认关闭备份，直接原地覆盖"})
+            }
+        }
+    RETURN_TYPES = ("BOOLEAN",)
+    RETURN_NAMES = ("trigger_out", )
+    FUNCTION = "execute"
+    CATEGORY = "QuizParser/Poem"
+    DESCRIPTION = "调用poem_mlt_builder_core，根据YAML原地更新Shotcut MLT；仅推导图片路径，图片由下游生成；wav必须预先就绪。"
+
+    def execute(self, trigger: bool, yaml_file_path: str, backup_original_mlt=False):
+        if not trigger:
+            return (False,)
+        if not yaml_file_path or not yaml_file_path.strip():
+            raise RuntimeError("yaml_file_path 不能为空")
+        p = Path(yaml_file_path.strip()).resolve()
+        run_build(p, backup_original=backup_original_mlt)
+        return (True,)
+
+
 NODE_CLASS_MAPPINGS = {
     "QuizParseExtractAudio": QuizParseExtractAudio,
     "QuizParseExtractImage": QuizParseExtractImage,
@@ -197,6 +231,7 @@ NODE_CLASS_MAPPINGS = {
     "PathGetBasename": PathGetBasename,
     "PathGetFileStem": PathGetFileStem,
     "PoemMetaParse": PoemMetaParse,
+    "PomMltBuilder": PomMltBuilder,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "QuizParseExtractAudio": "Quiz: Extract Audio Resources",
@@ -205,5 +240,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "PathGetBasename": "Util: Get Path Basename",
     "PathGetFileStem": "Util: Get Path File Stem",
     "PoemMetaParse": "Poem: Parse poem_meta",
+    "PomMltBuilder": "Poem: MLT Builder(Core)",
 }
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
