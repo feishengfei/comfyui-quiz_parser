@@ -45,6 +45,7 @@ import yaml
 from datetime import datetime
 
 MARKER_TODO = "TODOSUBTITLE"
+FALLBACK_DURATION = 4.0
 
 
 def _get_fps_from_profile(root) -> tuple[int, int]:
@@ -181,6 +182,9 @@ def run_build(yaml_path: Path, backup_original: bool):
                 raise RuntimeError(f"group {g_id} 音频读取失败，路径:{wav_abs}，工作流终止")
             seg_duration_raw = dur_raw
             md5_wav = _calc_wav_md5(wav_abs)
+        else:
+            # group本身没有音频，使用兜底4秒时长，合法场景
+            seg_duration_raw = FALLBACK_DURATION
 
         seg_length_sec = _ceil_to_frame(seg_duration_raw, FRAME_STEP)
         seg_out_sec = seg_length_sec - FRAME_STEP

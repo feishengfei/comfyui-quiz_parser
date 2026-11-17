@@ -199,7 +199,6 @@ class PomMltBuilder:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "trigger": ("BOOLEAN", {"default": False, "tooltip":"上游trigger信号，True才执行本节点逻辑"}),
                 "yaml_file_path": ("STRING", {
                     "multiline": False,
                     "default": "",
@@ -207,6 +206,7 @@ class PomMltBuilder:
                 }),
             },
             "optional": {
+                "trigger": ("*", {"tooltip":"上游执行依赖信号；接上则等待上游完成才运行；不接则直接运行，仅用于DAG时序，不判断信号布尔值"}),
                 "backup_original_mlt": ("BOOLEAN", {"default": False, "tooltip":"是否备份原始mlt为 *.bak.mlt；ComfyUI默认关闭备份，直接原地覆盖"})
             }
         }
@@ -214,15 +214,19 @@ class PomMltBuilder:
     RETURN_NAMES = ("trigger_out", )
     FUNCTION = "execute"
     CATEGORY = "QuizParser/Poem"
-    DESCRIPTION = "调用poem_mlt_builder_core，根据YAML原地更新Shotcut MLT；仅推导图片路径，图片由下游生成；wav必须预先就绪。"
+    DESCRIPTION = "调用poem_mlt_builder_core，根据YAML原地更新Shotcut MLT；仅推导图片路径，图片由下游生成；wav必须预先就绪。trigger仅作为DAG时序依赖，不判断真假。"
 
-    def execute(self, trigger: bool, yaml_file_path: str, backup_original_mlt=False):
-        if not trigger:
-            return (False,)
+    def execute(self, yaml_file_path: str, backup_original_mlt=False, **kwargs):
+        # trigger只做DAG连线依赖，不读取它的值；kwargs吸收可选trigger入参，避免unexpected keyword异常
+        _ = kwargs.get("trigger")
+
         if not yaml_file_path or not yaml_file_path.strip():
             raise RuntimeError("yaml_file_path 不能为空")
+
         p = Path(yaml_file_path.strip()).resolve()
         run_build(p, backup_original=backup_original_mlt)
+
+        # 固定输出True，表示本节点执行完成，给到下游作为执行就绪信号
         return (True,)
 
 
