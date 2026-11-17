@@ -1,22 +1,44 @@
 #!/usr/bin/env python3
 """
 诗文YAML转Shotcut MLT工具
-修复:
-1. DOM插入位置错误，chain插入到black与background中间，background被后移
-2. sub_prod带入shotcut:hash、creation_time非法属性
-3. filter id全局重复冲突
-4. bug: Element.remove()不支持多参数解包
+变更：
+1. playlist0(A1) / playlist1(V1) 移除片段间1帧blank，紧凑排布
+2. A1/V1 entry.out 使用 seg["mlt_out"]，与chain/producer自身out字段完全对齐
+3. playlist2(V2)逻辑不作改动
 """
 import argparse
 import copy
 import re
+import math
 import wave
+import hashlib
 from pathlib import Path
 from lxml import etree
 import yaml
+from datetime import datetime
+
 
 FALLBACK_DURATION = 4.0
-ONE_FRAME = "00:00:00.033"
+ONE_FRAME_STR = "00:00:00.033"
+
+
+def get_fps_from_profile(root) -> tuple[int, int]:
+    """从<profile>读取 frame_rate_num / frame_rate_den，失败返回 (30,1)"""
+    profile = root.find("./profile")
+    if profile is None:
+        return (30, 1)
+    num = profile.get("frame_rate_num")
+    den = profile.get("frame_rate_den")
+    try:
+        return int(num), int(den)
+    except (ValueError, TypeError):
+        return (30, 1)
+
+
+def ceil_to_frame(raw_sec: float, frame_step: float) -> float:
+    """向上ceil对齐到帧边界"""
+    frame_num = math.ceil(raw_sec / frame_step)
+    return frame_num * frame_step
 
 
 def seconds_to_mlt_time(total_seconds: float) -> str:
@@ -37,6 +59,24 @@ def get_wav_duration(wav_file: Path) -> float | None:
             return frames / float(rate)
     except Exception:
         return None
+
+
+def calc_wav_md5(wav_file: Path) -> str | None:
+    if not wav_file.exists():
+        return None
+    try:
+        h = hashlib.md5()
+        with open(str(wav_file), "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return None
+
+
+def get_creation_time_str() -> str:
+    """生成本地时区 ISO 格式 2026-11-17T10:38:22"""
+    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
 
 def make_property(name: str, value: str):
@@ -66,6 +106,11 @@ def process_single_yaml(yaml_path: Path):
         raise RuntimeError(f"MLT模板XML解析失败 {template_mlt_path}: {e}")
     root = tree.getroot()
 
+    # 读取帧率
+    fr_num, fr_den = get_fps_from_profile(root)
+    FRAME_STEP = fr_den / fr_num
+    print(f"📌 读取profile帧率：{fr_num}/{fr_den}, frame_step={FRAME_STEP:.6f}")
+
     example_sub_prod = root.find('.//producer[@id="producer0"]')
     if example_sub_prod is None:
         raise RuntimeError("模板mlt找不到producer0字幕样例")
@@ -75,7 +120,6 @@ def process_single_yaml(yaml_path: Path):
     bg_pl = root.find('.//playlist[@id="background"]')
     if black_prod is None or bg_pl is None:
         raise RuntimeError("模板缺失black producer或background playlist")
-
     insert_pos = root.index(bg_pl) + 1
 
     def reset_playlist(pid):
@@ -92,7 +136,7 @@ def process_single_yaml(yaml_path: Path):
 
     chain_nodes = []
     image_producer_nodes = []
-    current_global_time_sec = 0.0
+    seg_duration_list = []
     group_segments = []
 
     for group in groups:
@@ -107,21 +151,26 @@ def process_single_yaml(yaml_path: Path):
         img_rel = f"image/img_{img_idx:05d}_.png"
         wav_abs = yaml_dir / wav_rel
 
-        seg_duration: float
+        seg_duration_raw: float | None = None
+        md5_wav: str | None = None
         if has_a:
-            dur = get_wav_duration(wav_abs)
-            if dur is not None:
-                seg_duration = dur
+            dur_raw = get_wav_duration(wav_abs)
+            if dur_raw is not None:
+                seg_duration_raw = dur_raw
+                md5_wav = calc_wav_md5(wav_abs)
             else:
                 print(f"⚠️ group{g_id}: wav读取失败，fallback {FALLBACK_DURATION}s")
-                seg_duration = FALLBACK_DURATION
-        else:
-            seg_duration = FALLBACK_DURATION
 
-        seg_start = current_global_time_sec
-        seg_end = current_global_time_sec + seg_duration
-        current_global_time_sec = seg_end
-        mlt_out_str = seconds_to_mlt_time(seg_duration)
+        if seg_duration_raw is not None:
+            seg_length_sec = ceil_to_frame(seg_duration_raw, FRAME_STEP)
+        else:
+            seg_length_sec = ceil_to_frame(FALLBACK_DURATION, FRAME_STEP)
+
+        seg_out_sec = seg_length_sec - FRAME_STEP
+        seg_duration_list.append(seg_length_sec)
+
+        mlt_length_str = seconds_to_mlt_time(seg_length_sec)
+        mlt_out_str = seconds_to_mlt_time(seg_out_sec)
         gst_val = gst_raw.strip() if (gst_raw and isinstance(gst_raw, str)) else None
 
         seg_info = {
@@ -131,18 +180,18 @@ def process_single_yaml(yaml_path: Path):
             "gst": gst_val,
             "wav_rel": wav_rel,
             "img_rel": img_rel,
-            "duration_sec": seg_duration,
-            "start_sec": seg_start,
-            "end_sec": seg_end,
+            "length_sec": seg_length_sec,
+            "out_sec": seg_out_sec,
+            "mlt_length": mlt_length_str,
             "mlt_out": mlt_out_str,
         }
         group_segments.append(seg_info)
 
-        if has_a and get_wav_duration(wav_abs) is not None:
+        if has_a and seg_duration_raw is not None:
             cid = f"chain{g_num}"
             chain_elem = etree.Element("chain", attrib={"id": cid, "out": mlt_out_str})
             props_chain = [
-                ("length", mlt_out_str),
+                ("length", mlt_length_str),
                 ("eof", "pause"),
                 ("resource", wav_rel),
                 ("mlt_service", "avformat-novalidate"),
@@ -158,16 +207,19 @@ def process_single_yaml(yaml_path: Path):
                 ("seekable", "1"),
                 ("audio_index", "0"),
                 ("video_index", "-1"),
+                ("creation_time", get_creation_time_str()),
                 ("astream", "0"),
                 ("shotcut:skipConvert", "1"),
-                ("shotcut:caption", wav_rel),
+                ("shotcut:caption", Path(wav_rel).name),
             ]
             for k, v in props_chain:
                 chain_elem.append(make_property(k, v))
+            if md5_wav is not None:
+                chain_elem.append(make_property("shotcut:hash", md5_wav))
             chain_nodes.append(chain_elem)
 
         pid = f"producer{g_num}"
-        prod_img = etree.Element("producer", attrib={"id": pid, "out": "03:59:59.967"})
+        prod_img = etree.Element("producer", attrib={"id": pid, "out": mlt_out_str})
         props_img = [
             ("length", "04:00:00.000"),
             ("eof", "pause"),
@@ -181,7 +233,7 @@ def process_single_yaml(yaml_path: Path):
             ("meta.media.height", "1920"),
             ("mlt_service", "qimage"),
             ("shotcut:skipConvert", "1"),
-            ("shotcut:caption", img_rel),
+            ("shotcut:caption", Path(img_rel).name),
         ]
         for k, v in props_img:
             prod_img.append(make_property(k, v))
@@ -194,36 +246,37 @@ def process_single_yaml(yaml_path: Path):
         root.insert(insert_pos, p)
         insert_pos += 1
 
-    # A1 playlist0
-    total_seg = len(group_segments)
-    for idx, seg in enumerate(group_segments):
+    # -------- A1 playlist0：紧凑，无中间blank；entry.out = seg["mlt_out"] --------
+    for seg in group_segments:
         entry_attrib = {"in": "00:00:00.000", "out": seg["mlt_out"]}
-        if seg["has_a"] and (get_wav_duration(yaml_dir / seg["wav_rel"]) is not None):
-            e_a = etree.Element("entry", attrib=entry_attrib)
-            e_a.set("producer", f"chain{seg['g_num']}")
-            pl0.append(e_a)
+        if seg["has_a"]:
+            wav_abs = yaml_dir / seg["wav_rel"]
+            raw_dur = get_wav_duration(wav_abs)
+            if raw_dur is not None:
+                e_a = etree.Element("entry", attrib=entry_attrib)
+                e_a.set("producer", f"chain{seg['g_num']}")
+                pl0.append(e_a)
+            else:
+                blk_a = etree.Element("blank", attrib={"length": seg["mlt_out"]})
+                pl0.append(blk_a)
         else:
             blk_a = etree.Element("blank", attrib={"length": seg["mlt_out"]})
             pl0.append(blk_a)
-        if idx != total_seg - 1:
-            pl0.append(etree.Element("blank", attrib={"length": ONE_FRAME}))
 
-    # V1 playlist1
-    for idx, seg in enumerate(group_segments):
+    # -------- V1 playlist1：紧凑，无中间blank；entry.out = seg["mlt_out"] --------
+    for seg in group_segments:
         entry_attrib = {"in": "00:00:00.000", "out": seg["mlt_out"]}
         e_v1 = etree.Element("entry", attrib=entry_attrib)
         e_v1.set("producer", f"producer{seg['g_num']}")
         pl1.append(e_v1)
-        if idx != total_seg - 1:
-            pl1.append(etree.Element("blank", attrib={"length": ONE_FRAME}))
 
-    # V2 gst合并
+    # -------- V2 gst合并（原有逻辑完全保留不变，包含chunk之间blank） --------
     v2_chunks = []
     merge_chunk = None
     for seg in group_segments:
         st = seg["st"]
         gst = seg["gst"]
-        dur_sec = seg["duration_sec"]
+        dur_sec = seg["length_sec"]
         if st != "verse" or not gst:
             if merge_chunk is not None:
                 v2_chunks.append({
@@ -270,13 +323,11 @@ def process_single_yaml(yaml_path: Path):
             sub_prod.set("id", sp_id)
             sub_prod.set("out", "03:59:59.967")
 
-            # 删除shotcut运行时属性
             for bad_prop_name in ("shotcut:hash", "creation_time"):
                 bad_nodes = sub_prod.xpath(f'./property[@name="{bad_prop_name}"]')
                 for n in bad_nodes:
                     sub_prod.remove(n)
 
-            # -----修复：逐个remove，不能*解包-----
             old_filters = list(sub_prod.xpath("./filter"))
             for f in old_filters:
                 sub_prod.remove(f)
@@ -299,29 +350,33 @@ def process_single_yaml(yaml_path: Path):
             entry_sub.set("producer", sp_id)
             pl2.append(entry_sub)
         if idx != total_v2_chunk - 1:
-            pl2.append(etree.Element("blank", attrib={"length": ONE_FRAME}))
+            pl2.append(etree.Element("blank", attrib={"length": ONE_FRAME_STR}))
 
-    # 更新总时长
-    total_project_sec = current_global_time_sec
-    total_mlt_time = seconds_to_mlt_time(total_project_sec)
+    # black总时长逻辑：片段length求和后整体ceil；black.out = black.length -1帧
+    sum_raw = sum(seg_duration_list)
+    black_length_sec = ceil_to_frame(sum_raw, FRAME_STEP)
+    black_out_sec = black_length_sec - FRAME_STEP
 
-    black_prod.set("out", total_mlt_time)
+    black_len_str = seconds_to_mlt_time(black_length_sec)
+    black_out_str = seconds_to_mlt_time(black_out_sec)
+
+    black_prod.set("out", black_out_str)
     p_len_black = black_prod.find('./property[@name="length"]')
     if p_len_black is not None:
-        p_len_black.text = total_mlt_time
+        p_len_black.text = black_len_str
 
     for child in list(bg_pl):
         bg_pl.remove(child)
     bg_entry = etree.Element("entry", attrib={
         "producer": "black",
         "in": "00:00:00.000",
-        "out": total_mlt_time
+        "out": black_out_str
     })
     bg_pl.append(bg_entry)
 
     tractor0 = root.find('.//tractor[@id="tractor0"]')
     if tractor0 is not None:
-        tractor0.set("out", total_mlt_time)
+        tractor0.set("out", black_out_str)
 
     tree.write(
         str(output_mlt_path),
@@ -333,7 +388,7 @@ def process_single_yaml(yaml_path: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="诗文YAML批量生成Shotcut MLT工程【修复remove多参数bug】")
+    parser = argparse.ArgumentParser(description="诗文YAML批量生成Shotcut MLT【A1/V1紧凑无间隙，entry.out对齐producer.out】")
     parser.add_argument("yaml_files", nargs="+", help="一个或多个yaml文件路径")
     args = parser.parse_args()
     for yf in args.yaml_files:
