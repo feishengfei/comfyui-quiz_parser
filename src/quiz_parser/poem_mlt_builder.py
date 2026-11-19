@@ -383,8 +383,16 @@ def run_build(yaml_path: Path, backup_original: bool):
                     if ck["mode"] == "verse":
                         new_html = orig_html.replace(MARKER_TODO, ck["gst"])
                     elif ck["mode"] == "cover":
-                        cover_text_parts = [poem_title, poem_author_or_source, poem_dynasty]
-                        cover_text = " ".join(p for p in cover_text_parts if p.strip())
+                        cover_parts = []
+                        if poem_title.strip():
+                            cover_parts.append(poem_title.strip())
+                        if poem_author_or_source.strip():
+                            cover_parts.append(poem_author_or_source.strip())
+                        dyn_stripped = poem_dynasty.strip()
+                        if dyn_stripped:
+                            cover_parts.append(f"〔{dyn_stripped}〕")
+
+                        cover_text = " ".join(cover_parts)
                         new_html = orig_html.replace(MARKER_TODO, cover_text)
                     else:
                         new_html = orig_html
