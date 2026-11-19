@@ -128,6 +128,16 @@ def run_build(yaml_path: Path, backup_original: bool):
         poem_data = yaml.safe_load(f)
     groups = poem_data["groups"]
 
+    poem_title = ""
+    poem_author_or_source = ""
+    poem_dynasty = ""
+    poem_meta = poem_data.get("poem_meta", None)
+    if isinstance(poem_meta, dict):
+        poem_title = poem_meta.get("title", "")
+        poem_author_or_source = poem_meta.get("author_or_source", "")
+        poem_dynasty = poem_meta.get("dynasty", "")
+
+
     parser = etree.XMLParser(remove_blank_text=True)
     tree = etree.parse(str(src_mlt_path), parser)
     root = tree.getroot()
@@ -372,6 +382,10 @@ def run_build(yaml_path: Path, backup_original: bool):
                     orig_html = html_prop.text
                     if ck["mode"] == "verse":
                         new_html = orig_html.replace(MARKER_TODO, ck["gst"])
+                    elif ck["mode"] == "cover":
+                        cover_text_parts = [poem_title, poem_author_or_source, poem_dynasty]
+                        cover_text = " ".join(p for p in cover_text_parts if p.strip())
+                        new_html = orig_html.replace(MARKER_TODO, cover_text)
                     else:
                         new_html = orig_html
                     html_prop.text = new_html
